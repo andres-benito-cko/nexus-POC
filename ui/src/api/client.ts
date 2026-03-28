@@ -22,7 +22,7 @@ export interface DlqEvent {
   replayedAt: string | null
 }
 
-export interface NexusTransaction {
+export interface Transaction {
   transaction_id: string
   product_type: string
   transaction_type: string
@@ -40,7 +40,7 @@ export interface NexusBlock {
   processed_at: string
   cko_entity_id?: string
   entity?: { id: string }
-  transactions?: NexusTransaction[]
+  transactions?: Transaction[]
 }
 
 // --- Fetch helpers ---
