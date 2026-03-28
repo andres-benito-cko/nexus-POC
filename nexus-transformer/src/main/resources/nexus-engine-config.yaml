@@ -1,0 +1,297 @@
+version: "1.0"
+
+classification:
+  family:
+    - when: "!pillars.contains('GATEWAY') && pillars.contains('CASH')"
+      result: CASH
+    - when: "ctx.get('FIAPI.metadata.actionType') != null && ctx.get('FIAPI.metadata.actionType').contains('CARD_PAYOUT')"
+      result: PAYOUT
+    - when: "ctx.get('FIAPI.metadata.actionType') != null && ctx.get('FIAPI.metadata.actionType').contains('TOP_UP')"
+      result: TOPUP
+    - default: ACQUIRING
+  type:
+    priority: [FIAPI, GATEWAY, SD, CASH]
+    field_per_source:
+      FIAPI: "metadata.actionType"
+      GATEWAY: "eventType"
+      SD: "metadata.transactionType"
+      CASH: "standardMetadata.actionType"
+    mapping:
+      CAPTURE: [CAPTURE, payment_captured, Capture, "Aft Capture"]
+      REFUND:  [REFUND, payment_refunded, Refund]
+      CHARGEBACK: [CHARGEBACK, payment_chargeback_received, Chargeback]
+      AUTH: [AUTHORIZATION, payment_approved]
+      CREDIT: [CARD_PAYOUT, TOP_UP, paid_out, top_up]
+      SETTLEMENT: [SETTLEMENT]
+
+state_machines:
+  ACQUIRING:
+    states:
+      GATEWAY_ONLY:
+        transaction_status: NOT_LIVE
+        trade_status: CAPTURED
+      WITH_COS:
+        transaction_status: NOT_LIVE
+        trade_status: CAPTURED
+      WITH_FIAPI:
+        transaction_status: LIVE
+        trade_status: CAPTURED
+      SETTLED:
+        transaction_status: LIVE
+        trade_status: SETTLED
+    transitions:
+      - to: SETTLED
+        when: "pillars.contains('SD') || pillars.contains('CASH')"
+      - to: WITH_FIAPI
+        when: "pillars.contains('FIAPI')"
+      - to: WITH_COS
+        when: "pillars.contains('COS')"
+      - default: GATEWAY_ONLY
+  PAYOUT:
+    states:
+      INITIATED:
+        transaction_status: LIVE
+        trade_status: INITIATED
+      SETTLED:
+        transaction_status: LIVE
+        trade_status: SETTLED
+    transitions:
+      - to: SETTLED
+        when: "pillars.contains('SD') || pillars.contains('CASH')"
+      - default: INITIATED
+  TOPUP:
+    states:
+      INITIATED:
+        transaction_status: LIVE
+        trade_status: INITIATED
+      SETTLED:
+        transaction_status: LIVE
+        trade_status: SETTLED
+    transitions:
+      - to: SETTLED
+        when: "pillars.contains('SD') || pillars.contains('CASH')"
+      - default: INITIATED
+  CASH:
+    states:
+      ACTUAL:
+        transaction_status: LIVE
+        trade_status: SETTLED
+    transitions:
+      - default: ACTUAL
+
+trades:
+  ACQUIRING:
+    CAPTURE:
+      legs:
+        - type: SCHEME_SETTLEMENT
+          when: "pillars.contains('COS') || pillars.contains('SD')"
+          from_party_type: SCHEME
+          to_party_type: CKO_ENTITY
+          amount:
+            $resolve: SETTLEMENT_AMOUNT
+            params:
+              source_priority: [SD, GATEWAY]
+          status:
+            $when:
+              - if: "pillars.contains('SD')"
+                then: ACTUAL
+              - else: PREDICTED
+          fees:
+            $resolve: SCHEME_FEES
+            params:
+              source_priority: [SD, GATEWAY]
+        - type: FUNDING
+          when: "pillars.contains('FIAPI')"
+          from_party_type: CKO_ENTITY
+          to_party_type: CLIENT_ENTITY
+          amount:
+            $resolve: FUNDING_AMOUNT
+          status: ACTUAL
+          rolling_reserve:
+            $resolve: ROLLING_RESERVE_AMOUNT
+          fees:
+            $resolve: FUNDING_FEES
+        - type: FUNDING
+          when: "!pillars.contains('COS') && !pillars.contains('SD') && !pillars.contains('FIAPI') && pillars.contains('GATEWAY')"
+          from_party_type: CKO_ENTITY
+          to_party_type: CLIENT_ENTITY
+          amount:
+            $resolve: GATEWAY_AMOUNT
+          status: PREDICTED
+    REFUND:
+      legs:
+        - type: SCHEME_SETTLEMENT
+          when: "pillars.contains('COS') || pillars.contains('SD')"
+          from_party_type: CKO_ENTITY
+          to_party_type: SCHEME
+          amount:
+            $resolve: SETTLEMENT_AMOUNT
+            params:
+              source_priority: [SD, GATEWAY]
+          status:
+            $when:
+              - if: "pillars.contains('SD')"
+                then: ACTUAL
+              - else: PREDICTED
+          fees:
+            $resolve: SCHEME_FEES
+            params:
+              source_priority: [SD, GATEWAY]
+        - type: FUNDING
+          when: "pillars.contains('FIAPI')"
+          from_party_type: CLIENT_ENTITY
+          to_party_type: CKO_ENTITY
+          amount:
+            $resolve: FUNDING_AMOUNT
+          status: ACTUAL
+          fees:
+            $resolve: FUNDING_FEES
+    CHARGEBACK:
+      legs:
+        - type: SCHEME_SETTLEMENT
+          when: "pillars.contains('COS') || pillars.contains('SD')"
+          from_party_type: CKO_ENTITY
+          to_party_type: SCHEME
+          amount:
+            $resolve: SETTLEMENT_AMOUNT
+            params:
+              source_priority: [SD, GATEWAY]
+          status:
+            $when:
+              - if: "pillars.contains('SD')"
+                then: ACTUAL
+              - else: PREDICTED
+          fees:
+            $resolve: SCHEME_FEES
+            params:
+              source_priority: [SD, GATEWAY]
+        - type: FUNDING
+          when: "pillars.contains('FIAPI')"
+          from_party_type: CLIENT_ENTITY
+          to_party_type: CKO_ENTITY
+          amount:
+            $resolve: FUNDING_AMOUNT
+          status: ACTUAL
+          fees:
+            $resolve: FUNDING_FEES
+    AUTH:
+      legs:
+        - type: FUNDING
+          when: "pillars.contains('GATEWAY')"
+          from_party_type: CKO_ENTITY
+          to_party_type: CLIENT_ENTITY
+          amount:
+            $resolve: GATEWAY_AMOUNT
+          status: PREDICTED
+  PAYOUT:
+    CREDIT:
+      legs:
+        - type: FUNDING
+          when: "pillars.contains('FIAPI')"
+          from_party_type: CKO_ENTITY
+          to_party_type: CLIENT_ENTITY
+          amount:
+            $resolve: FUNDING_AMOUNT
+          status: ACTUAL
+          fees:
+            $resolve: FUNDING_FEES
+  TOPUP:
+    CREDIT:
+      legs:
+        - type: FUNDING
+          when: "pillars.contains('FIAPI')"
+          from_party_type: CLIENT_ENTITY
+          to_party_type: CKO_ENTITY
+          amount:
+            $resolve: FUNDING_AMOUNT
+          status: ACTUAL
+  CASH:
+    SETTLEMENT:
+      legs:
+        - type: FUNDING
+          when: "pillars.contains('CASH')"
+          from_party_type: CKO_ENTITY
+          to_party_type: CLIENT_ENTITY
+          amount:
+            $resolve: CASH_AMOUNT
+          status: ACTUAL
+
+field_mappings:
+  entity_id:
+    $field: ["FIAPI.metadata.clientId", "SD.metadata.clientId", "CASH.standardMetadata.entityId"]
+    $fallback: "unknown_entity"
+  cko_entity_id:
+    $field: ["FIAPI.metadata.settlementCompanyCkoLegalEntityCode", "SD.metadata.settlementCompanyCkoLegalEntityCode"]
+    $fallback: "CKO_UNKNOWN"
+  acquirer_entity:
+    $field: ["FIAPI.metadata.acquirerCompanyCkoLegalEntityCode", "SD.metadata.acquirerCompanyCkoLegalEntityCode"]
+    $fallback: "CKO_UNKNOWN"
+  scheme:
+    $field: ["SD.metadata.scheme", "FIAPI.metadata.schemeCode", "CASH.standardMetadata.scheme"]
+    $fallback: "UNKNOWN_SCHEME"
+  processed_at:
+    $field: ["GATEWAY.processedOn", "GATEWAY.envelope.originEventTimestamp"]
+    $fallback: "$now()"
+  trade_date:
+    $field: ["GATEWAY.processedOn"]
+    $fallback: "$now()"
+  source_event_type:
+    $field: ["GATEWAY.eventType"]
+  scheme_code:
+    $field: ["SD.metadata.scheme", "FIAPI.metadata.schemeCode", "CASH.standardMetadata.scheme"]
+  payment_method:
+    $field: ["FIAPI.metadata.paymentMethod", "COS.metadata.paymentMethod"]
+  acquirer_name:
+    $field: ["SD.metadata.acquirerName", "FIAPI.metadata.acquirerName", "GATEWAY.acquirerName"]
+  acquirer_country:
+    $field: ["SD.metadata.acquirerCountry", "FIAPI.metadata.acquirerCountry", "GATEWAY.acquirerCountry"]
+  client_settlement_type:
+    $field: ["FIAPI.metadata.clientSettlementType"]
+  merchant_category_code:
+    $field: ["FIAPI.metadata.merchantCategoryCode"]
+  external_id:
+    $field: ["FIAPI.metadata.externalId"]
+  enhanced_action_type:
+    $field: ["FIAPI.metadata.enhancedActionType"]
+  invoice_number:
+    $field: ["FIAPI.metadata.invoiceNumber", "COS.metadata.invoiceNumber", "CASH.standardMetadata.invoiceNumber"]
+  reconciliation_reference:
+    $field: ["COS.metadata.reconciliationReference"]
+  scheme_partner_identifier:
+    $field: ["COS.metadata.schemePartnerIdentifier"]
+  is_net_settled:
+    $field: ["COS.metadata.isNetSettled"]
+  settlement_service_name:
+    $field: ["SD.metadata.settlementServiceName"]
+  settlement_country_code:
+    $field: ["SD.metadata.settlementCountryCode"]
+  central_processing_date:
+    $field: ["SD.metadata.centralProcessingDate"]
+  cash_batch_id:
+    $field: ["GATEWAY.cashBatchId", "CASH.standardMetadata.cashBatchId"]
+  payout_id:
+    $field: ["CASH.standardMetadata.payoutId"]
+  billing_descriptor:
+    $field: ["CASH.standardMetadata.billingDescriptor"]
+  value_date:
+    $field: ["SD.metadata.expectedValueDate", "FIAPI.metadata.valueDate", "COS.metadata.invoiceDate", "CASH.standardMetadata.valueDate"]
+  cash_direction:
+    $field: ["CASH.standardPayload.direction"]
+  cash_legal_entity:
+    $field: ["CASH.standardMetadata.legalEntity"]
+  gateway_amount_value:
+    $field: ["GATEWAY.amount.value"]
+  gateway_amount_currency:
+    $field: ["GATEWAY.amount.currencyCode"]
+
+fee_type_mappings:
+  sd:
+    INTERCHANGE_FEE: INTERCHANGE
+    SCHEME_FEE: SCHEME_FEE
+  cos:
+    FEE_TYPE_INTERCHANGE: INTERCHANGE
+    FEE_TYPE_SCHEME: SCHEME_FEE
+  fiapi:
+    Gateway: PROCESSING_FEE
+    Scheme: SCHEME_FEE
+    Interchange: INTERCHANGE
