@@ -1,0 +1,25 @@
+# Build
+build/
+.gradle/
+out/
+node_modules/
+dist/
+.next/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime
+*.log
+postgres_data/
+
+# Secrets
+.env
+.env.local
