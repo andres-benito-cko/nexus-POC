@@ -58,8 +58,8 @@ class NexusEngineConfigLoadTest {
     @Test
     @DisplayName("trades map contains ACQUIRING with CAPTURE/REFUND/CHARGEBACK/AUTH entries")
     void trades_containsAcquiringTypes() {
-        assertThat(config.getTrades()).containsKey("ACQUIRING");
-        assertThat(config.getTrades().get("ACQUIRING")).containsKeys("CAPTURE", "REFUND", "CHARGEBACK", "AUTH");
+        assertThat(config.getTransactions()).containsKey("ACQUIRING");
+        assertThat(config.getTransactions().get("ACQUIRING")).containsKeys("CAPTURE", "REFUND", "CHARGEBACK", "AUTH");
     }
 
     @Test
@@ -75,22 +75,22 @@ class NexusEngineConfigLoadTest {
     }
 
     @Test
-    @DisplayName("ACQUIRING.GATEWAY_ONLY state has NOT_LIVE transaction status")
+    @DisplayName("ACQUIRING.GATEWAY_ONLY state has NOT_LIVE block status")
     void acquiringGatewayOnlyState_isNotLive() {
         StateMachineConfig acquiring = config.getStateMachines().get("ACQUIRING");
         StateConfig gwOnly = acquiring.getStates().get("GATEWAY_ONLY");
         assertThat(gwOnly).isNotNull();
-        assertThat(gwOnly.getTransactionStatus()).isEqualTo("NOT_LIVE");
+        assertThat(gwOnly.getBlockStatus()).isEqualTo("NOT_LIVE");
     }
 
     @Test
-    @DisplayName("ACQUIRING.SETTLED state has LIVE transaction status and SETTLED trade status")
+    @DisplayName("ACQUIRING.SETTLED state has LIVE block status and SETTLED transaction status")
     void acquiringSettledState_isLiveAndSettled() {
         StateMachineConfig acquiring = config.getStateMachines().get("ACQUIRING");
         StateConfig settled = acquiring.getStates().get("SETTLED");
         assertThat(settled).isNotNull();
-        assertThat(settled.getTransactionStatus()).isEqualTo("LIVE");
-        assertThat(settled.getTradeStatus()).isEqualTo("SETTLED");
+        assertThat(settled.getBlockStatus()).isEqualTo("LIVE");
+        assertThat(settled.getTransactionStatus()).isEqualTo("SETTLED");
     }
 
     @Test

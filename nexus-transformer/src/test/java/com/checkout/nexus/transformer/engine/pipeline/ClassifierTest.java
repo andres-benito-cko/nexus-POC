@@ -43,8 +43,8 @@ class ClassifierTest {
         LeContext ctx = new LeContext(tx);
 
         ClassificationResult result = classifier.classify(ctx);
-        assertThat(result.getTradeFamily()).isEqualTo("ACQUIRING");
-        assertThat(result.getTradeType()).isEqualTo("CAPTURE");
+        assertThat(result.getProductType()).isEqualTo("ACQUIRING");
+        assertThat(result.getTransactionType()).isEqualTo("CAPTURE");
     }
 
     @Test
@@ -60,8 +60,8 @@ class ClassifierTest {
         LeContext ctx = new LeContext(tx);
 
         ClassificationResult result = classifier.classify(ctx);
-        assertThat(result.getTradeFamily()).isEqualTo("PAYOUT");
-        assertThat(result.getTradeType()).isEqualTo("CREDIT");
+        assertThat(result.getProductType()).isEqualTo("PAYOUT");
+        assertThat(result.getTransactionType()).isEqualTo("CREDIT");
     }
 
     @Test
@@ -77,8 +77,8 @@ class ClassifierTest {
         LeContext ctx = new LeContext(tx);
 
         ClassificationResult result = classifier.classify(ctx);
-        assertThat(result.getTradeFamily()).isEqualTo("CASH");
-        assertThat(result.getTradeType()).isEqualTo("SETTLEMENT");
+        assertThat(result.getProductType()).isEqualTo("CASH");
+        assertThat(result.getTransactionType()).isEqualTo("SETTLEMENT");
     }
 
     @Test
@@ -92,8 +92,8 @@ class ClassifierTest {
         LeContext ctx = new LeContext(tx);
 
         ClassificationResult result = classifier.classify(ctx);
-        assertThat(result.getTradeFamily()).isEqualTo("ACQUIRING");
-        assertThat(result.getTradeType()).isEqualTo("REFUND");
+        assertThat(result.getProductType()).isEqualTo("ACQUIRING");
+        assertThat(result.getTransactionType()).isEqualTo("REFUND");
     }
 
     @Test
@@ -109,8 +109,8 @@ class ClassifierTest {
         LeContext ctx = new LeContext(tx);
 
         ClassificationResult result = classifier.classify(ctx);
-        assertThat(result.getTradeFamily()).isEqualTo("ACQUIRING");
-        assertThat(result.getTradeType()).isEqualTo("CAPTURE");
+        assertThat(result.getProductType()).isEqualTo("ACQUIRING");
+        assertThat(result.getTransactionType()).isEqualTo("CAPTURE");
     }
 
     private static void setField(Object target, String fieldName, Object value) {

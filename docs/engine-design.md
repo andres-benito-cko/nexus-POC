@@ -22,7 +22,7 @@ This avoids two failure modes:
 version: "1.0"
 
 classifier:
-  tradeFamily:
+  productType:
     - when: "$pillars.contains('SD')"
       value: "SCHEME_SETTLEMENT"
     - when: "$pillars.contains('COS') && $pillars.contains('FIAPI')"
@@ -31,29 +31,29 @@ classifier:
       value: "CASH_MOVEMENT"
     - default: "UNKNOWN"
 
-  tradeType:
-    - when: "$tradeFamily == 'SCHEME_SETTLEMENT'"
+  transactionType:
+    - when: "$productType == 'SCHEME_SETTLEMENT'"
       value: "$resolve(schemeSettlementType, $sd.settlementType)"
-    - when: "$tradeFamily == 'CARD_TRANSACTION' && $gw.transactionType == 'CAPTURE'"
+    - when: "$productType == 'CARD_TRANSACTION' && $gw.transactionType == 'CAPTURE'"
       value: "CAPTURE"
-    - when: "$tradeFamily == 'CARD_TRANSACTION' && $gw.transactionType == 'REFUND'"
+    - when: "$productType == 'CARD_TRANSACTION' && $gw.transactionType == 'REFUND'"
       value: "REFUND"
-    - when: "$tradeFamily == 'CARD_TRANSACTION' && $gw.transactionType == 'VOID'"
+    - when: "$productType == 'CARD_TRANSACTION' && $gw.transactionType == 'VOID'"
       value: "VOID"
-    - when: "$tradeFamily == 'CASH_MOVEMENT'"
+    - when: "$productType == 'CASH_MOVEMENT'"
       value: "$resolve(cashMovementType, $cash.direction, $cash.subType)"
     - default: "UNKNOWN"
 
 stateMachine:
   transactionStatus:
     NOT_LIVE:
-      - when: "$pillarCount >= $resolve(minimumPillarsForLive, $tradeFamily)"
+      - when: "$pillarCount >= $resolve(minimumPillarsForLive, $productType)"
         transition: LIVE
     LIVE:
-      - when: "$pillars.contains('SD') || $tradeFamily == 'CASH_MOVEMENT'"
+      - when: "$pillars.contains('SD') || $productType == 'CASH_MOVEMENT'"
         transition: DEAD
 
-  tradeStatus:
+  transactionStatus:
     PENDING:
       - when: "$leg.valueType == 'ACTUAL'"
         transition: SETTLED
@@ -62,9 +62,9 @@ stateMachine:
 
 transaction:
   header:
-    transactionId: "$resolve(generateTransactionId, $actionId, $version)"
+    nexusId: "$resolve(generateNexusId, $actionId, $version)"
     actionId: "$actionId"
-    parentTransactionId: "$resolve(lookupParentTransaction, $actionId)"
+    parentNexusId: "$resolve(lookupParentTransaction, $actionId)"
     transactionTimestamp: "$resolve(normaliseTimestamp, $gw.createdOn)"
     processingDate: "$resolve(deriveProcessingDate, $gw.createdOn, $gw.timeZone)"
     transactionStatus: "$transactionStatus"
@@ -81,10 +81,10 @@ transaction:
     entityType: "CKO_ENTITY"
 
   trades:
-    - id: "$resolve(generateTradeId, $transactionId, $tradeFamily)"
-      tradeFamily: "$tradeFamily"
-      tradeType: "$tradeType"
-      tradeStatus: "$tradeStatus"
+    - id: "$resolve(generateTransactionId, $nexusId, $productType)"
+      productType: "$productType"
+      transactionType: "$transactionType"
+      transactionStatus: "$transactionStatus"
       originatingAmount: "$gw.amount"
       originatingCurrency: "$resolve(normaliseCurrency, $gw.currency)"
       settledAmount: "$resolve(resolveSettledAmount, $sd, $fiapi)"
@@ -94,29 +94,29 @@ transaction:
       authCode: "$gw.authCode"
 
       legs:
-        - id: "$resolve(generateLegId, $tradeId, 'SCHEME_SETTLEMENT')"
+        - id: "$resolve(generateLegId, $transactionId, 'SCHEME_SETTLEMENT')"
           pillar: "SCHEME_SETTLEMENT"
           valueType: "$resolve(deriveValueType, $sd)"
           amount: "$resolve(resolveSchemeSettlementAmount, $sd, $fiapi)"
           currency: "$resolve(normaliseSettledCurrency, $sd, $fiapi)"
-          direction: "$resolve(deriveDirection, $tradeType)"
+          direction: "$resolve(deriveDirection, $transactionType)"
           counterpartyType: "SCHEME"
           counterpartyId: "$resolve(normaliseScheme, $gw.scheme)"
           enabled:
-            when: "$tradeFamily == 'CARD_TRANSACTION'"
+            when: "$productType == 'CARD_TRANSACTION'"
 
-        - id: "$resolve(generateLegId, $tradeId, 'FUNDING')"
+        - id: "$resolve(generateLegId, $transactionId, 'FUNDING')"
           pillar: "FUNDING"
           valueType: "$resolve(deriveValueType, $fiapi)"
           amount: "$fiapi.netAmount"
           currency: "$resolve(normaliseCurrency, $fiapi.currency)"
-          direction: "$resolve(deriveDirection, $tradeType)"
+          direction: "$resolve(deriveDirection, $transactionType)"
           counterpartyType: "CLIENT_ENTITY"
           counterpartyId: "$gw.merchantId"
           enabled:
             when: "$pillars.contains('FIAPI')"
 
-        - id: "$resolve(generateLegId, $tradeId, 'CASH')"
+        - id: "$resolve(generateLegId, $transactionId, 'CASH')"
           pillar: "CASH"
           valueType: "ACTUAL"
           amount: "$cash.amount"
@@ -125,10 +125,10 @@ transaction:
           counterpartyType: "$resolve(cashCounterpartyType, $cash.subType)"
           counterpartyId: "$resolve(cashCounterpartyId, $cash)"
           enabled:
-            when: "$tradeFamily == 'CASH_MOVEMENT'"
+            when: "$productType == 'CASH_MOVEMENT'"
 
       fees:
-        - id: "$resolve(generateFeeId, $tradeId, 'SCHEME_FEE')"
+        - id: "$resolve(generateFeeId, $transactionId, 'SCHEME_FEE')"
           feeType: "SCHEME_FEE"
           valueType: "$resolve(deriveValueType, $sd)"
           amount: "$resolve(resolveSchemeFee, $sd, $cos)"
@@ -136,7 +136,7 @@ transaction:
           enabled:
             when: "$pillars.contains('COS') || $pillars.contains('SD')"
 
-        - id: "$resolve(generateFeeId, $tradeId, 'PROCESSING_FEE')"
+        - id: "$resolve(generateFeeId, $transactionId, 'PROCESSING_FEE')"
           feeType: "PROCESSING_FEE"
           valueType: "ACTUAL"
           amount: "$cos.processingFee"
@@ -149,7 +149,7 @@ transaction:
 
 | Capability | Example |
 |---|---|
-| Change classification rules | Add a new `tradeFamily` condition for a new pillar combination |
+| Change classification rules | Add a new `productType` condition for a new pillar combination |
 | Change state machine transitions | Adjust when a transaction moves from `LIVE` to `DEAD` |
 | Add or remove a fee type from a trade | Enable/disable a fee entry via the `enabled.when` expression |
 | Change field mappings | Map `originatingCurrency` to a different source field |
@@ -168,11 +168,11 @@ transaction:
 
 ```
 LeContext
-  → Classifier          → tradeFamily, tradeType
-  → StateMachineRunner  → transactionStatus, tradeStatus
+  → Classifier          → productType, transactionType
+  → StateMachineRunner  → transactionStatus, transactionStatus
   → TradeAssembler      → Trade[] (calls LegAssembler per leg rule)
-  → TransactionAssembler→ NexusTransaction (standard fields + custom fields)
-  → Validator           → valid: nexus.transactions / invalid: nexus.transactions.dlq
+  → BlockAssembler→ NexusBlock (standard fields + custom fields)
+  → Validator           → valid: nexus.blocks / invalid: nexus.blocks.dlq
 ```
 
 Each stage receives the output of the previous stage as additional context. The `LeContext` wraps all available pillar data and is immutable throughout the pipeline run.
@@ -187,7 +187,7 @@ com.checkout.nexus.transformer
 │   ├── expression/      # ExpressionEvaluator ($field, $when, $resolve)
 │   ├── resolver/        # FieldResolver interface + built-in resolvers
 │   ├── pipeline/        # Classifier, StateMachineRunner, assemblers
-│   └── NexusEngine.java # Entry point: LeContext → NexusTransaction
+│   └── NexusEngine.java # Entry point: LeContext → NexusBlock
 ├── validation/          # NexusValidator + DlqHandler
 ├── service/             # TransformerService (wires Kafka → NexusEngine)
 └── model/               # (unchanged)

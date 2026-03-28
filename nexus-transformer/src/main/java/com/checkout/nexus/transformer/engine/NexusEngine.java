@@ -5,8 +5,8 @@ import com.checkout.nexus.transformer.engine.pipeline.ClassificationResult;
 import com.checkout.nexus.transformer.engine.pipeline.Classifier;
 import com.checkout.nexus.transformer.engine.pipeline.StateResult;
 import com.checkout.nexus.transformer.engine.pipeline.StateMachineRunner;
-import com.checkout.nexus.transformer.engine.pipeline.TransactionAssembler;
-import com.checkout.nexus.transformer.model.NexusTransaction;
+import com.checkout.nexus.transformer.engine.pipeline.BlockAssembler;
+import com.checkout.nexus.transformer.model.NexusBlock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,9 +16,9 @@ import org.springframework.stereotype.Component;
  *
  * <p>Orchestrates the three pipeline stages:
  * <ol>
- *   <li>{@link Classifier} — determines trade family and type</li>
- *   <li>{@link StateMachineRunner} — determines transaction and trade statuses</li>
- *   <li>{@link TransactionAssembler} — assembles the full {@link NexusTransaction}</li>
+ *   <li>{@link Classifier} — determines product type and transaction type</li>
+ *   <li>{@link StateMachineRunner} — determines block and transaction statuses</li>
+ *   <li>{@link BlockAssembler} — assembles the full {@link NexusBlock}</li>
  * </ol>
  */
 @Slf4j
@@ -28,23 +28,23 @@ public class NexusEngine {
 
     private final Classifier classifier;
     private final StateMachineRunner stateMachineRunner;
-    private final TransactionAssembler transactionAssembler;
+    private final BlockAssembler blockAssembler;
 
     /**
-     * Transforms a wrapped LE transaction into a {@link NexusTransaction}.
+     * Transforms a wrapped LE transaction into a {@link NexusBlock}.
      *
      * @param ctx the wrapped LE context
      * @return the assembled Nexus transaction
      */
-    public NexusTransaction transform(LeContext ctx) {
+    public NexusBlock transform(LeContext ctx) {
         ClassificationResult classification = classifier.classify(ctx);
-        log.debug("Classified: family={}, type={}", classification.getTradeFamily(), classification.getTradeType());
+        log.debug("Classified: family={}, type={}", classification.getProductType(), classification.getTransactionType());
 
-        StateResult state = stateMachineRunner.run(ctx, classification.getTradeFamily());
-        log.debug("State: transactionStatus={}, tradeStatus={}", state.getTransactionStatus(), state.getTradeStatus());
+        StateResult state = stateMachineRunner.run(ctx, classification.getProductType());
+        log.debug("State: blockStatus={}, transactionStatus={}", state.getBlockStatus(), state.getTransactionStatus());
 
-        NexusTransaction result = transactionAssembler.assemble(ctx, classification, state);
-        log.debug("Assembled transaction: id={}", result.getTransactionId());
+        NexusBlock result = blockAssembler.assemble(ctx, classification, state);
+        log.debug("Assembled transaction: id={}", result.getNexusId());
 
         return result;
     }

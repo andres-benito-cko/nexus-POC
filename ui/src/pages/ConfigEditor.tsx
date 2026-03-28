@@ -33,8 +33,8 @@ export interface ClassificationType {
 }
 
 export interface StateMachineState {
+  block_status: string
   transaction_status: string
-  trade_status: string
 }
 
 export interface StateMachineTransition {
@@ -60,7 +60,7 @@ export interface NexusEngineConfigContent {
     type?: ClassificationType
   }
   state_machines?: Record<string, StateMachine>
-  trades?: Record<string, Record<string, unknown>>
+  transactions?: Record<string, Record<string, unknown>>
   field_mappings?: Record<string, FieldMapping>
   fee_type_mappings?: Record<string, Record<string, string>>
 }

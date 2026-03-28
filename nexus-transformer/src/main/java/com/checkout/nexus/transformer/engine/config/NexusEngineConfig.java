@@ -25,8 +25,8 @@ public class NexusEngineConfig {
     @JsonProperty("state_machines")
     private Map<String, StateMachineConfig> stateMachines;
 
-    @JsonProperty("trades")
-    private Map<String, Map<String, TradeConfig>> trades;
+    @JsonProperty("transactions")
+    private Map<String, Map<String, TransactionConfig>> transactions;
 
     @JsonProperty("field_mappings")
     private Map<String, FieldMapping> fieldMappings;

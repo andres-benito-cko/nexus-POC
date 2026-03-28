@@ -7,7 +7,7 @@ import {
   getTransactions,
   activateConfig,
   type EngineConfig,
-  type NexusTransaction,
+  type NexusBlock,
 } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
 import { showToast } from '../components/Toast'
@@ -118,7 +118,7 @@ export default function Dashboard() {
         {/* Throughput */}
         <Card title="Buffer Size" error={txQuery.isError}>
           <p className="text-3xl font-bold text-zinc-900">{transactions.length}</p>
-          <p className="text-xs text-zinc-400 mt-1">Transactions in memory</p>
+          <p className="text-xs text-zinc-400 mt-1">Blocks in memory</p>
         </Card>
       </div>
 
@@ -174,38 +174,38 @@ export default function Dashboard() {
       {/* Recent transactions */}
       <div className="glow-border rounded-xl p-5">
         <h2 className="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">
-          Recent Transactions
+          Recent Blocks
         </h2>
         {recent.length === 0 ? (
-          <EmptyState message="No transactions yet" />
+          <EmptyState message="No blocks yet" />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-100">
-                  <Th>Transaction ID</Th>
+                  <Th>Nexus ID</Th>
                   <Th>Status</Th>
-                  <Th>Trade Family</Th>
-                  <Th>Trade Type</Th>
+                  <Th>Product Type</Th>
+                  <Th>Transaction Type</Th>
                   <Th>Processed At</Th>
                 </tr>
               </thead>
               <tbody>
-                {recent.map((tx: NexusTransaction) => {
-                  const trade = tx.trades?.[0]
+                {recent.map((tx: NexusBlock) => {
+                  const txn = tx.transactions?.[0]
                   return (
                     <tr
-                      key={tx.transaction_id}
+                      key={tx.nexus_id}
                       className="border-b border-zinc-50 hover:bg-accent-glow transition-colors"
                     >
                       <td className="py-2.5 pr-4 font-mono text-xs text-zinc-700">
-                        {truncateId(tx.transaction_id ?? '', 12)}
+                        {truncateId(tx.nexus_id ?? '', 12)}
                       </td>
                       <td className="py-2.5 pr-4">
                         <StatusBadge status={tx.status} />
                       </td>
-                      <td className="py-2.5 pr-4 text-zinc-600">{trade?.trade_family ?? '--'}</td>
-                      <td className="py-2.5 pr-4 text-zinc-600">{trade?.trade_type ?? '--'}</td>
+                      <td className="py-2.5 pr-4 text-zinc-600">{txn?.product_type ?? '--'}</td>
+                      <td className="py-2.5 pr-4 text-zinc-600">{txn?.transaction_type ?? '--'}</td>
                       <td className="py-2.5 text-zinc-500">{formatDate(tx.processed_at)}</td>
                     </tr>
                   )

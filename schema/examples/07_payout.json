@@ -1,6 +1,6 @@
 {
-  "transaction_id": "act_pout_001",
-  "parent_transaction_id": "pay_pout_001",
+  "nexus_id": "act_pout_001",
+  "parent_nexus_id": "pay_pout_001",
   "action_id": "act_pout_001",
   "action_root_id": "pay_pout_001",
   "status": "LIVE",
@@ -9,15 +9,15 @@
   },
   "cko_entity_id": "CKO_UK_LTD",
   "processed_at": "2026-03-21T17:00:00Z",
-  "trades": [
+  "transactions": [
     {
-      "trade_id": "act_pout_001_1",
-      "trade_family": "PAYOUT",
-      "trade_type": "CREDIT",
-      "trade_status": "SETTLED",
-      "trade_amount": 500.00,
-      "trade_currency": "GBP",
-      "trade_date": "2026-03-21",
+      "transaction_id": "act_pout_001_1",
+      "product_type": "PAYOUT",
+      "transaction_type": "CREDIT",
+      "transaction_status": "SETTLED",
+      "transaction_amount": 500.0,
+      "transaction_currency": "GBP",
+      "transaction_date": "2026-03-21",
       "metadata": {
         "payout_id": "pout_001",
         "billing_descriptor": "ACME PAYOUT"
@@ -26,7 +26,7 @@
         {
           "leg_id": "act_pout_001_1_L1",
           "leg_type": "FUNDING",
-          "leg_amount": 500.00,
+          "leg_amount": 500.0,
           "leg_currency": "GBP",
           "leg_status": "ACTUAL",
           "value_date": "2026-03-23",

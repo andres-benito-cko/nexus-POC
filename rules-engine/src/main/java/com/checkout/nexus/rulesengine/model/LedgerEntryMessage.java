@@ -27,11 +27,11 @@ public class LedgerEntryMessage {
     @JsonProperty("ruleName")
     private String ruleName;
 
+    @JsonProperty("nexusId")
+    private String nexusId;
+
     @JsonProperty("transactionId")
     private String transactionId;
-
-    @JsonProperty("tradeId")
-    private String tradeId;
 
     @JsonProperty("legId")
     private String legId;
@@ -48,12 +48,12 @@ public class LedgerEntryMessage {
     @JsonProperty("currency")
     private String currency;
 
-    @JsonProperty("tradeFamily")
-    private String tradeFamily;
+    @JsonProperty("productType")
+    private String productType;
 
-    @JsonProperty("tradeType")
-    private String tradeType;
+    @JsonProperty("transactionType")
+    private String transactionType;
 
-    @JsonProperty("tradeStatus")
-    private String tradeStatus;
+    @JsonProperty("transactionStatus")
+    private String transactionStatus;
 }

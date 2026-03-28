@@ -1,12 +1,12 @@
 package com.checkout.nexus.rulesengine.service;
 
 import com.checkout.nexus.rulesengine.model.LedgerEntryMessage;
-import com.checkout.nexus.rulesengine.model.NexusTransaction;
+import com.checkout.nexus.rulesengine.model.NexusBlock;
 import com.checkout.nexus.rulesengine.model.entity.LedgerEntry;
-import com.checkout.nexus.rulesengine.model.entity.NexusTransactionRecord;
+import com.checkout.nexus.rulesengine.model.entity.NexusBlockRecord;
 import com.checkout.nexus.rulesengine.model.entity.Rule;
 import com.checkout.nexus.rulesengine.repository.LedgerEntryRepository;
-import com.checkout.nexus.rulesengine.repository.NexusTransactionRepository;
+import com.checkout.nexus.rulesengine.repository.NexusBlockRepository;
 import com.checkout.nexus.rulesengine.repository.RuleRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -29,15 +29,15 @@ public class RulesEngineService {
 
     private final RuleRepository ruleRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
-    private final NexusTransactionRepository nexusTransactionRepository;
+    private final NexusBlockRepository nexusBlockRepository;
     private final KafkaTemplate<String, LedgerEntryMessage> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "nexus.transactions", groupId = "rules-engine",
+    @KafkaListener(topics = "nexus.blocks", groupId = "rules-engine",
             containerFactory = "nexusContainerFactory")
-    public void onNexusTransaction(NexusTransaction nexus) {
-        log.info("Received Nexus transaction: transactionId={}, status={}",
-            nexus.getTransactionId(), nexus.getStatus());
+    public void onNexusBlock(NexusBlock nexus) {
+        log.info("Received Nexus transaction: nexusId={}, status={}",
+            nexus.getNexusId(), nexus.getStatus());
 
         try {
             // Persist the Nexus transaction
@@ -53,69 +53,69 @@ public class RulesEngineService {
             for (LedgerEntry entry : entries) {
                 LedgerEntry saved = ledgerEntryRepository.save(entry);
                 LedgerEntryMessage msg = toLedgerMessage(saved);
-                kafkaTemplate.send(LEDGER_TOPIC, nexus.getTransactionId(), msg);
+                kafkaTemplate.send(LEDGER_TOPIC, nexus.getNexusId(), msg);
                 log.info("Produced ledger entry: rule={}, debit={}, credit={}, amount={} {}",
                     saved.getRuleName(), saved.getDebitAccount(), saved.getCreditAccount(),
                     saved.getAmount(), saved.getCurrency());
             }
 
         } catch (Exception e) {
-            log.error("Error processing Nexus transaction: transactionId={}", nexus.getTransactionId(), e);
+            log.error("Error processing Nexus transaction: nexusId={}", nexus.getNexusId(), e);
         }
     }
 
-    private void persistTransaction(NexusTransaction nexus) {
+    private void persistTransaction(NexusBlock nexus) {
         try {
             String rawJson = objectMapper.writeValueAsString(nexus);
 
-            String tradeFamily = null, tradeType = null, tradeStatus = null;
-            BigDecimal tradeAmount = null;
-            String tradeCurrency = null;
+            String productType = null, transactionType = null, transactionStatus = null;
+            BigDecimal transactionAmount = null;
+            String transactionCurrency = null;
 
-            if (nexus.getTrades() != null && !nexus.getTrades().isEmpty()) {
-                NexusTransaction.Trade trade = nexus.getTrades().get(0);
-                tradeFamily = trade.getTradeFamily();
-                tradeType = trade.getTradeType();
-                tradeStatus = trade.getTradeStatus();
-                tradeAmount = BigDecimal.valueOf(trade.getTradeAmount());
-                tradeCurrency = trade.getTradeCurrency();
+            if (nexus.getTransactions() != null && !nexus.getTransactions().isEmpty()) {
+                NexusBlock.Transaction txn = nexus.getTransactions().get(0);
+                productType = txn.getProductType();
+                transactionType = txn.getTransactionType();
+                transactionStatus = txn.getTransactionStatus();
+                transactionAmount = BigDecimal.valueOf(txn.getTransactionAmount());
+                transactionCurrency = txn.getTransactionCurrency();
             }
 
-            NexusTransactionRecord record = NexusTransactionRecord.builder()
-                .transactionId(nexus.getTransactionId())
+            NexusBlockRecord record = NexusBlockRecord.builder()
+                .nexusId(nexus.getNexusId())
                 .actionId(nexus.getActionId())
                 .actionRootId(nexus.getActionRootId())
                 .status(nexus.getStatus())
                 .entityId(nexus.getEntity() != null ? nexus.getEntity().getId() : null)
                 .ckoEntityId(nexus.getCkoEntityId())
-                .tradeFamily(tradeFamily)
-                .tradeType(tradeType)
-                .tradeStatus(tradeStatus)
-                .tradeAmount(tradeAmount)
-                .tradeCurrency(tradeCurrency)
+                .productType(productType)
+                .transactionType(transactionType)
+                .transactionStatus(transactionStatus)
+                .transactionAmount(transactionAmount)
+                .transactionCurrency(transactionCurrency)
                 .rawJson(rawJson)
                 .receivedAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-            nexusTransactionRepository.save(record);
+            nexusBlockRepository.save(record);
         } catch (Exception e) {
             log.error("Error persisting Nexus transaction", e);
         }
     }
 
-    private List<LedgerEntry> applyRules(NexusTransaction nexus, List<Rule> rules) {
+    private List<LedgerEntry> applyRules(NexusBlock nexus, List<Rule> rules) {
         List<LedgerEntry> entries = new ArrayList<>();
 
-        if (nexus.getTrades() == null) return entries;
+        if (nexus.getTransactions() == null) return entries;
 
-        for (NexusTransaction.Trade trade : nexus.getTrades()) {
+        for (NexusBlock.Transaction txn : nexus.getTransactions()) {
             for (Rule rule : rules) {
-                if (!matches(rule, trade)) continue;
+                if (!matches(rule, txn)) continue;
 
-                if (trade.getLegs() == null) continue;
+                if (txn.getLegs() == null) continue;
 
-                for (NexusTransaction.Leg leg : trade.getLegs()) {
+                for (NexusBlock.Leg leg : txn.getLegs()) {
                     // Check leg_type match
                     if (rule.getLegType() != null && !rule.getLegType().equals(leg.getLegType())) {
                         continue;
@@ -124,9 +124,9 @@ public class RulesEngineService {
                     if ("fee_amount".equals(rule.getAmountSource())) {
                         // Create entries for each fee
                         if (leg.getFees() != null) {
-                            for (NexusTransaction.Fee fee : leg.getFees()) {
+                            for (NexusBlock.Fee fee : leg.getFees()) {
                                 if (fee.getFeeAmount() > 0) {
-                                    entries.add(buildEntry(rule, nexus, trade, leg,
+                                    entries.add(buildEntry(rule, nexus, txn, leg,
                                         BigDecimal.valueOf(fee.getFeeAmount()), fee.getFeeCurrency()));
                                 }
                             }
@@ -134,7 +134,7 @@ public class RulesEngineService {
                     } else {
                         // Use leg_amount
                         if (leg.getLegAmount() > 0) {
-                            entries.add(buildEntry(rule, nexus, trade, leg,
+                            entries.add(buildEntry(rule, nexus, txn, leg,
                                 BigDecimal.valueOf(leg.getLegAmount()), leg.getLegCurrency()));
                         }
                     }
@@ -145,34 +145,34 @@ public class RulesEngineService {
         return entries;
     }
 
-    private boolean matches(Rule rule, NexusTransaction.Trade trade) {
-        if (rule.getTradeFamily() != null && !rule.getTradeFamily().equals(trade.getTradeFamily())) {
+    private boolean matches(Rule rule, NexusBlock.Transaction txn) {
+        if (rule.getProductType() != null && !rule.getProductType().equals(txn.getProductType())) {
             return false;
         }
-        if (rule.getTradeType() != null && !rule.getTradeType().equals(trade.getTradeType())) {
+        if (rule.getTransactionType() != null && !rule.getTransactionType().equals(txn.getTransactionType())) {
             return false;
         }
-        if (rule.getTradeStatus() != null && !rule.getTradeStatus().equals(trade.getTradeStatus())) {
+        if (rule.getTransactionStatus() != null && !rule.getTransactionStatus().equals(txn.getTransactionStatus())) {
             return false;
         }
         return true;
     }
 
-    private LedgerEntry buildEntry(Rule rule, NexusTransaction nexus, NexusTransaction.Trade trade,
-            NexusTransaction.Leg leg, BigDecimal amount, String currency) {
+    private LedgerEntry buildEntry(Rule rule, NexusBlock nexus, NexusBlock.Transaction txn,
+            NexusBlock.Leg leg, BigDecimal amount, String currency) {
         return LedgerEntry.builder()
             .ruleId(rule.getId())
             .ruleName(rule.getName())
-            .transactionId(nexus.getTransactionId())
-            .tradeId(trade.getTradeId())
+            .nexusId(nexus.getNexusId())
+            .transactionId(txn.getTransactionId())
             .legId(leg.getLegId())
             .debitAccount(rule.getDebitAccount())
             .creditAccount(rule.getCreditAccount())
             .amount(amount)
             .currency(currency != null ? currency : "EUR")
-            .tradeFamily(trade.getTradeFamily())
-            .tradeType(trade.getTradeType())
-            .tradeStatus(trade.getTradeStatus())
+            .productType(txn.getProductType())
+            .transactionType(txn.getTransactionType())
+            .transactionStatus(txn.getTransactionStatus())
             .createdAt(LocalDateTime.now())
             .build();
     }
@@ -182,16 +182,16 @@ public class RulesEngineService {
             .id(entry.getId())
             .ruleId(entry.getRuleId())
             .ruleName(entry.getRuleName())
+            .nexusId(entry.getNexusId())
             .transactionId(entry.getTransactionId())
-            .tradeId(entry.getTradeId())
             .legId(entry.getLegId())
             .debitAccount(entry.getDebitAccount())
             .creditAccount(entry.getCreditAccount())
             .amount(entry.getAmount())
             .currency(entry.getCurrency())
-            .tradeFamily(entry.getTradeFamily())
-            .tradeType(entry.getTradeType())
-            .tradeStatus(entry.getTradeStatus())
+            .productType(entry.getProductType())
+            .transactionType(entry.getTransactionType())
+            .transactionStatus(entry.getTransactionStatus())
             .build();
     }
 }

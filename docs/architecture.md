@@ -26,7 +26,7 @@
 ## Data Flow Summary
 
 ```
-LE Simulator --> [le.linked.transactions] --> Nexus Transformer --> [nexus.transactions] --> Rules Engine --> [nexus.ledger.entries]
+LE Simulator --> [le.linked.transactions] --> Nexus Transformer --> [nexus.blocks] --> Rules Engine --> [nexus.ledger.entries]
                                                                                                   |
                                                                                             PostgreSQL
                                                                                                   ^

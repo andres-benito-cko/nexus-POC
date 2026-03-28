@@ -24,7 +24,7 @@ public class DlqConsumer {
     private final EventStreamService eventStreamService;
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    @KafkaListener(topics = "nexus.transactions.dlq", groupId = "nexus-api-dlq")
+    @KafkaListener(topics = "nexus.blocks.dlq", groupId = "nexus-api-dlq")
     public void onDlqEvent(String payload) {
         try {
             Map<String, Object> envelope = MAPPER.readValue(payload, new TypeReference<>() {});

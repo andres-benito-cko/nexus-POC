@@ -1,7 +1,7 @@
 package com.checkout.nexus.rulesengine.config;
 
 import com.checkout.nexus.rulesengine.model.LedgerEntryMessage;
-import com.checkout.nexus.rulesengine.model.NexusTransaction;
+import com.checkout.nexus.rulesengine.model.NexusBlock;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,15 +46,15 @@ public class KafkaConfig {
         return factory;
     }
 
-    // Factory for nexus.transactions — type headers disabled by nexus-transformer producer.
+    // Factory for nexus.blocks — type headers disabled by nexus-transformer producer.
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, NexusTransaction> nexusContainerFactory() {
-        JsonDeserializer<NexusTransaction> deserializer = new JsonDeserializer<>(NexusTransaction.class);
+    public ConcurrentKafkaListenerContainerFactory<String, NexusBlock> nexusContainerFactory() {
+        JsonDeserializer<NexusBlock> deserializer = new JsonDeserializer<>(NexusBlock.class);
         deserializer.addTrustedPackages("*");
         deserializer.setUseTypeHeaders(false);
-        ConsumerFactory<String, NexusTransaction> cf =
+        ConsumerFactory<String, NexusBlock> cf =
                 new DefaultKafkaConsumerFactory<>(baseConsumerProps(), new StringDeserializer(), deserializer);
-        ConcurrentKafkaListenerContainerFactory<String, NexusTransaction> factory =
+        ConcurrentKafkaListenerContainerFactory<String, NexusBlock> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(cf);
         return factory;

@@ -1,9 +1,9 @@
 package com.checkout.nexus.rulesengine.controller;
 
 import com.checkout.nexus.rulesengine.model.entity.LedgerEntry;
-import com.checkout.nexus.rulesengine.model.entity.NexusTransactionRecord;
+import com.checkout.nexus.rulesengine.model.entity.NexusBlockRecord;
 import com.checkout.nexus.rulesengine.repository.LedgerEntryRepository;
-import com.checkout.nexus.rulesengine.repository.NexusTransactionRepository;
+import com.checkout.nexus.rulesengine.repository.NexusBlockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -13,30 +13,30 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/transactions")
+@RequestMapping("/blocks")
 @RequiredArgsConstructor
-public class TransactionController {
+public class BlockController {
 
-    private final NexusTransactionRepository nexusTransactionRepository;
+    private final NexusBlockRepository nexusBlockRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
 
     @GetMapping
-    public List<NexusTransactionRecord> listTransactions(@RequestParam(defaultValue = "20") int limit) {
-        return nexusTransactionRepository.findAllByOrderByReceivedAtDesc(PageRequest.of(0, limit));
+    public List<NexusBlockRecord> listTransactions(@RequestParam(defaultValue = "20") int limit) {
+        return nexusBlockRepository.findAllByOrderByReceivedAtDesc(PageRequest.of(0, limit));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<NexusTransactionRecord> getTransaction(@PathVariable String id) {
-        return nexusTransactionRepository.findById(id)
+    public ResponseEntity<NexusBlockRecord> getTransaction(@PathVariable String id) {
+        return nexusBlockRepository.findById(id)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}/ledger")
     public ResponseEntity<Map<String, Object>> getTransactionLedger(@PathVariable String id) {
-        return nexusTransactionRepository.findById(id)
+        return nexusBlockRepository.findById(id)
             .map(txn -> {
-                List<LedgerEntry> entries = ledgerEntryRepository.findByTransactionId(id);
+                List<LedgerEntry> entries = ledgerEntryRepository.findByNexusId(id);
                 return ResponseEntity.ok(Map.<String, Object>of(
                     "transaction", txn,
                     "ledgerEntries", entries

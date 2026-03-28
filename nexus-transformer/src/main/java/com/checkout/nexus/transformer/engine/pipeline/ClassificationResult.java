@@ -4,6 +4,6 @@ import lombok.Value;
 
 @Value
 public class ClassificationResult {
-    String tradeFamily;
-    String tradeType;
+    String productType;
+    String transactionType;
 }

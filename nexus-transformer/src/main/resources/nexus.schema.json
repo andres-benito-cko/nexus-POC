@@ -2,28 +2,28 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://checkout.com/schemas/nexus/v1/transaction.json",
   "title": "Nexus Financial Transaction",
-  "description": "Nexus unified financial transaction data contract. Nexus is NOT a ledger — it describes financial events (trades, legs, fees) across all Transactional Ledger pillars, not balance states. One Nexus transaction corresponds to one Linking Engine action_id. Partial pillar data is normal: legs are added incrementally as pillar data arrives.",
+  "description": "Nexus unified financial transaction data contract. Nexus is NOT a ledger \u2014 it describes financial events (transactions, legs, fees) across all Transactional Ledger pillars, not balance states. One Nexus transaction corresponds to one Linking Engine action_id. Partial pillar data is normal: legs are added incrementally as pillar data arrives.",
   "type": "object",
   "required": [
-    "transaction_id",
+    "nexus_id",
     "action_id",
     "action_root_id",
     "status",
     "entity",
     "cko_entity_id",
     "processed_at",
-    "trades"
+    "transactions"
   ],
   "additionalProperties": false,
   "properties": {
-    "transaction_id": {
+    "nexus_id": {
       "type": "string",
-      "description": "Unique Nexus transaction identifier, derived from the Linking Engine action_id (e.g. the action_id value itself).",
+      "description": "Unique Nexus block identifier, derived from the Linking Engine action_id (e.g. the action_id value itself).",
       "x-le-source": "action_id"
     },
-    "parent_transaction_id": {
+    "parent_nexus_id": {
       "type": "string",
-      "description": "Groups transactions within a payment lifecycle (e.g. auth → capture → refund). Maps from LE action_root_id. Allows consumers to reconstruct the full lifecycle of a payment.",
+      "description": "Groups transactions within a payment lifecycle (e.g. auth \u2192 capture \u2192 refund). Maps from LE action_root_id. Allows consumers to reconstruct the full lifecycle of a payment.",
       "x-le-source": "action_root_id"
     },
     "action_id": {
@@ -38,8 +38,12 @@
     },
     "status": {
       "type": "string",
-      "enum": ["NOT_LIVE", "LIVE", "DEAD"],
-      "description": "Technical data-completeness status of the transaction. NOT_LIVE: insufficient pillar data for required trades. LIVE: all required pillar data is present. DEAD: all data received and value dates have passed. The threshold for each status is configurable per trade family."
+      "enum": [
+        "NOT_LIVE",
+        "LIVE",
+        "DEAD"
+      ],
+      "description": "Technical data-completeness status of the transaction. NOT_LIVE: insufficient pillar data for required transactions. LIVE: all required pillar data is present. DEAD: all data received and value dates have passed. The threshold for each status is configurable per product type."
     },
     "entity": {
       "$ref": "#/$defs/Entity",
@@ -59,27 +63,29 @@
     "period_start": {
       "type": "string",
       "format": "date",
-      "description": "Billing period start date. Populated only for GLOBAL_PRICING trades (MinimumBilling, TieredPricing). Null/absent for transactional trades."
+      "description": "Billing period start date. Populated only for GLOBAL_PRICING transactions (MinimumBilling, TieredPricing). Null/absent for transactional transactions."
     },
     "period_end": {
       "type": "string",
       "format": "date",
-      "description": "Billing period end date. Populated only for GLOBAL_PRICING trades (MinimumBilling, TieredPricing). Null/absent for transactional trades."
+      "description": "Billing period end date. Populated only for GLOBAL_PRICING transactions (MinimumBilling, TieredPricing). Null/absent for transactional transactions."
     },
-    "trades": {
+    "transactions": {
       "type": "array",
       "minItems": 1,
       "items": {
-        "$ref": "#/$defs/Trade"
+        "$ref": "#/$defs/Transaction"
       },
-      "description": "Array of trades within this transaction. Each trade represents a distinct financial event (e.g. a capture, a refund, a scheme settlement)."
+      "description": "Array of transactions within this block. Each transaction represents a distinct financial event (e.g. a capture, a refund, a scheme settlement)."
     }
   },
   "$defs": {
     "Entity": {
       "type": "object",
       "description": "Client entity identifier. Represents the client (not CKO) side of the commercial relationship.",
-      "required": ["id"],
+      "required": [
+        "id"
+      ],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -93,57 +99,241 @@
         }
       }
     },
-    "Trade": {
+    "Transaction": {
       "type": "object",
-      "description": "A trade represents a single financial event within a Nexus transaction. Trade ID convention: {action_id}_1, {action_id}_2, etc.",
+      "description": "A transaction represents a single financial event within a Nexus block. Transaction ID convention: {action_id}_1, {action_id}_2, etc.",
       "required": [
-        "trade_id",
-        "trade_family",
-        "trade_type",
-        "trade_status",
-        "trade_amount",
-        "trade_currency",
-        "trade_date",
+        "transaction_id",
+        "product_type",
+        "transaction_type",
+        "transaction_status",
+        "transaction_amount",
+        "transaction_currency",
+        "transaction_date",
         "legs"
       ],
       "additionalProperties": false,
       "x-trade-type-matrix": {
-        "description": "Defines valid combinations of trade_family, trade_type, and trade_status. Only the combinations listed here are valid.",
-        "rules": [
-          { "family": "ACQUIRING", "type": "AUTH", "statuses": ["AUTHORISED", "EXPIRED", "REVERSED"] },
-          { "family": "ACQUIRING", "type": "CAPTURE", "statuses": ["CAPTURED", "ADVISED", "SETTLED", "REVERSED"] },
-          { "family": "ACQUIRING", "type": "REFUND", "statuses": ["INITIATED", "SETTLED", "REVERSED"] },
-          { "family": "ACQUIRING", "type": "CHARGEBACK", "statuses": ["RECEIVED", "WON", "LOST"] },
-          { "family": "ACQUIRING", "type": "REVERSAL", "statuses": ["REVERSED"] },
-          { "family": "ISSUING", "type": "AUTH", "statuses": ["AUTHORISED", "EXPIRED", "REVERSED"] },
-          { "family": "ISSUING", "type": "CAPTURE", "statuses": ["CAPTURED", "ADVISED", "SETTLED", "REVERSED"] },
-          { "family": "ISSUING", "type": "REFUND", "statuses": ["INITIATED", "SETTLED", "REVERSED"] },
-          { "family": "ISSUING", "type": "CHARGEBACK", "statuses": ["RECEIVED", "WON", "LOST"] },
-          { "family": "ISSUING", "type": "REVERSAL", "statuses": ["REVERSED"] },
-          { "family": "PAYOUT", "type": "CREDIT", "statuses": ["INITIATED", "SETTLED", "RETURNED"] },
-          { "family": "PAYOUT", "type": "REVERSAL", "statuses": ["REVERSED"] },
-          { "family": "TOPUP", "type": "CREDIT", "statuses": ["INITIATED", "SETTLED", "RETURNED"] },
-          { "family": "TOPUP", "type": "REVERSAL", "statuses": ["REVERSED"] },
-          { "family": "FX", "type": "CONVERSION", "statuses": ["CONVERTED"] },
-          { "family": "APM", "type": "CAPTURE", "statuses": ["CAPTURED", "ADVISED", "SETTLED", "REVERSED"] },
-          { "family": "APM", "type": "REFUND", "statuses": ["INITIATED", "SETTLED", "REVERSED"] },
-          { "family": "APM", "type": "REVERSAL", "statuses": ["REVERSED"] },
-          { "family": "TRANSFER", "type": "DEBIT", "statuses": ["SETTLED"] },
-          { "family": "TRANSFER", "type": "CREDIT", "statuses": ["SETTLED"] },
-          { "family": "GLOBAL_PRICING", "type": "MINIMUM_BILLING", "statuses": ["INITIATED", "SETTLED"] },
-          { "family": "GLOBAL_PRICING", "type": "TIERED_PRICING", "statuses": ["INITIATED", "SETTLED"] },
-          { "family": "CASH", "type": "SETTLEMENT", "statuses": ["INITIATED", "SETTLED"] },
-          { "family": "CASH", "type": "RECEIPT", "statuses": ["INITIATED", "SETTLED"] },
-          { "family": "CASH", "type": "PAYMENT", "statuses": ["INITIATED", "SETTLED"] }
-        ]
-      },
-      "x-leg-composition-rules": {
-        "description": "Documents the expected leg composition per trade family/type. These are business rules, not enforced by JSON Schema validation. Cross-entity captures produce a separate TRANSFER trade rather than an additional leg.",
+        "description": "Defines valid combinations of product_type, transaction_type, and transaction_status. Only the combinations listed here are valid.",
         "rules": [
           {
             "family": "ACQUIRING",
             "type": "AUTH",
-            "legs": ["1x AUTH_HOLD (CLIENT_ENTITY -> CKO_ENTITY)"]
+            "statuses": [
+              "AUTHORISED",
+              "EXPIRED",
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "ACQUIRING",
+            "type": "CAPTURE",
+            "statuses": [
+              "CAPTURED",
+              "ADVISED",
+              "SETTLED",
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "ACQUIRING",
+            "type": "REFUND",
+            "statuses": [
+              "INITIATED",
+              "SETTLED",
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "ACQUIRING",
+            "type": "CHARGEBACK",
+            "statuses": [
+              "RECEIVED",
+              "WON",
+              "LOST"
+            ]
+          },
+          {
+            "family": "ACQUIRING",
+            "type": "REVERSAL",
+            "statuses": [
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "ISSUING",
+            "type": "AUTH",
+            "statuses": [
+              "AUTHORISED",
+              "EXPIRED",
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "ISSUING",
+            "type": "CAPTURE",
+            "statuses": [
+              "CAPTURED",
+              "ADVISED",
+              "SETTLED",
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "ISSUING",
+            "type": "REFUND",
+            "statuses": [
+              "INITIATED",
+              "SETTLED",
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "ISSUING",
+            "type": "CHARGEBACK",
+            "statuses": [
+              "RECEIVED",
+              "WON",
+              "LOST"
+            ]
+          },
+          {
+            "family": "ISSUING",
+            "type": "REVERSAL",
+            "statuses": [
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "PAYOUT",
+            "type": "CREDIT",
+            "statuses": [
+              "INITIATED",
+              "SETTLED",
+              "RETURNED"
+            ]
+          },
+          {
+            "family": "PAYOUT",
+            "type": "REVERSAL",
+            "statuses": [
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "TOPUP",
+            "type": "CREDIT",
+            "statuses": [
+              "INITIATED",
+              "SETTLED",
+              "RETURNED"
+            ]
+          },
+          {
+            "family": "TOPUP",
+            "type": "REVERSAL",
+            "statuses": [
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "FX",
+            "type": "CONVERSION",
+            "statuses": [
+              "CONVERTED"
+            ]
+          },
+          {
+            "family": "APM",
+            "type": "CAPTURE",
+            "statuses": [
+              "CAPTURED",
+              "ADVISED",
+              "SETTLED",
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "APM",
+            "type": "REFUND",
+            "statuses": [
+              "INITIATED",
+              "SETTLED",
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "APM",
+            "type": "REVERSAL",
+            "statuses": [
+              "REVERSED"
+            ]
+          },
+          {
+            "family": "TRANSFER",
+            "type": "DEBIT",
+            "statuses": [
+              "SETTLED"
+            ]
+          },
+          {
+            "family": "TRANSFER",
+            "type": "CREDIT",
+            "statuses": [
+              "SETTLED"
+            ]
+          },
+          {
+            "family": "GLOBAL_PRICING",
+            "type": "MINIMUM_BILLING",
+            "statuses": [
+              "INITIATED",
+              "SETTLED"
+            ]
+          },
+          {
+            "family": "GLOBAL_PRICING",
+            "type": "TIERED_PRICING",
+            "statuses": [
+              "INITIATED",
+              "SETTLED"
+            ]
+          },
+          {
+            "family": "CASH",
+            "type": "SETTLEMENT",
+            "statuses": [
+              "INITIATED",
+              "SETTLED"
+            ]
+          },
+          {
+            "family": "CASH",
+            "type": "RECEIPT",
+            "statuses": [
+              "INITIATED",
+              "SETTLED"
+            ]
+          },
+          {
+            "family": "CASH",
+            "type": "PAYMENT",
+            "statuses": [
+              "INITIATED",
+              "SETTLED"
+            ]
+          }
+        ]
+      },
+      "x-leg-composition-rules": {
+        "description": "Documents the expected leg composition per product type/type. These are business rules, not enforced by JSON Schema validation. Cross-entity captures produce a separate TRANSFER trade rather than an additional leg.",
+        "rules": [
+          {
+            "family": "ACQUIRING",
+            "type": "AUTH",
+            "legs": [
+              "1x AUTH_HOLD (CLIENT_ENTITY -> CKO_ENTITY)"
+            ]
           },
           {
             "family": "ACQUIRING",
@@ -173,17 +363,23 @@
           {
             "family": "PAYOUT",
             "type": "CREDIT",
-            "legs": ["1x FUNDING (CKO_ENTITY -> CLIENT_ENTITY)"]
+            "legs": [
+              "1x FUNDING (CKO_ENTITY -> CLIENT_ENTITY)"
+            ]
           },
           {
             "family": "TOPUP",
             "type": "CREDIT",
-            "legs": ["1x FUNDING (CLIENT_ENTITY -> CKO_ENTITY)"]
+            "legs": [
+              "1x FUNDING (CLIENT_ENTITY -> CKO_ENTITY)"
+            ]
           },
           {
             "family": "FX",
             "type": "CONVERSION",
-            "legs": ["1x FX_CONVERSION (CKO_ENTITY -> CKO_ENTITY, different currencies)"]
+            "legs": [
+              "1x FX_CONVERSION (CKO_ENTITY -> CKO_ENTITY, different currencies)"
+            ]
           },
           {
             "family": "TRANSFER",
@@ -204,16 +400,14 @@
           {
             "family": "CASH",
             "type": "*",
-            "legs": ["1x FUNDING"]
+            "legs": [
+              "1x FUNDING"
+            ]
           }
         ]
       },
       "properties": {
-        "trade_id": {
-          "type": "string",
-          "description": "Unique trade identifier within this Nexus transaction. Convention: {action_id}_1, {action_id}_2, etc."
-        },
-        "trade_family": {
+        "product_type": {
           "type": "string",
           "enum": [
             "ACQUIRING",
@@ -226,9 +420,9 @@
             "GLOBAL_PRICING",
             "CASH"
           ],
-          "description": "The product family this trade belongs to. Determines which trade_type and trade_status values are valid (see x-trade-type-matrix)."
+          "description": "The product family this transaction belongs to. Determines which transaction_type and transaction_status values are valid (see x-trade-type-matrix)."
         },
-        "trade_type": {
+        "transaction_type": {
           "type": "string",
           "enum": [
             "AUTH",
@@ -245,9 +439,9 @@
             "RECEIPT",
             "PAYMENT"
           ],
-          "description": "The type of financial event within the trade family. Valid values depend on trade_family (see x-trade-type-matrix)."
+          "description": "The type of financial event within the product type. Valid values depend on product_type (see x-trade-type-matrix)."
         },
-        "trade_status": {
+        "transaction_status": {
           "type": "string",
           "enum": [
             "AUTHORISED",
@@ -263,25 +457,25 @@
             "RETURNED",
             "CONVERTED"
           ],
-          "description": "Current status of the trade. Valid values depend on trade_family + trade_type (see x-trade-type-matrix)."
+          "description": "Current status of the transaction. Valid values depend on product_type + transaction_type (see x-trade-type-matrix)."
         },
-        "trade_amount": {
+        "transaction_amount": {
           "type": "number",
-          "description": "Principal amount of the trade in trade_currency."
+          "description": "Principal amount of the transaction in transaction_currency."
         },
-        "trade_currency": {
+        "transaction_currency": {
           "type": "string",
-          "description": "ISO 4217 currency code for the trade amount.",
+          "description": "ISO 4217 currency code for the transaction amount.",
           "pattern": "^[A-Z]{3}$"
         },
-        "trade_date": {
+        "transaction_date": {
           "type": "string",
           "format": "date",
-          "description": "Date of the trade."
+          "description": "Date of the transaction."
         },
         "metadata": {
-          "$ref": "#/$defs/TradeMetadata",
-          "description": "Optional bag of trade-type-specific fields. Which fields are populated varies by trade family."
+          "$ref": "#/$defs/TransactionMetadata",
+          "description": "Optional bag of trade-type-specific fields. Which fields are populated varies by product type."
         },
         "legs": {
           "type": "array",
@@ -289,137 +483,202 @@
           "items": {
             "$ref": "#/$defs/Leg"
           },
-          "description": "Array of legs within this trade. Each leg represents a movement of value between two parties."
+          "description": "Array of legs within this transaction. Each leg represents a movement of value between two parties."
+        },
+        "transaction_id": {
+          "type": "string",
+          "description": "Unique transaction identifier within this Nexus block. Convention: {action_id}_1, {action_id}_2, etc."
         }
       }
     },
-    "TradeMetadata": {
+    "TransactionMetadata": {
       "type": "object",
-      "description": "Optional trade-level metadata. All fields are optional; which fields are populated depends on the trade family. See x-relevant-families on each field for guidance.",
+      "description": "Optional transaction-level metadata. All fields are optional; which fields are populated depends on the product type. See x-relevant-families on each field for guidance.",
       "additionalProperties": false,
       "properties": {
         "scheme_code": {
           "type": "string",
           "description": "Scheme identifier code (e.g. VISA, MC, AMEX).",
-          "x-relevant-families": ["ACQUIRING", "ISSUING", "APM", "CASH"],
+          "x-relevant-families": [
+            "ACQUIRING",
+            "ISSUING",
+            "APM",
+            "CASH"
+          ],
           "x-le-source": "FIAPI scheme_code / SD scheme"
         },
         "payment_method": {
           "type": "string",
           "description": "Payment method used for the transaction (e.g. card, bank_transfer).",
-          "x-relevant-families": ["ACQUIRING", "ISSUING", "APM"],
+          "x-relevant-families": [
+            "ACQUIRING",
+            "ISSUING",
+            "APM"
+          ],
           "x-le-source": "FIAPI payment_method"
         },
         "acquirer_name": {
           "type": "string",
           "description": "Name of the acquirer that processed the transaction.",
-          "x-relevant-families": ["ACQUIRING", "ISSUING", "APM"],
+          "x-relevant-families": [
+            "ACQUIRING",
+            "ISSUING",
+            "APM"
+          ],
           "x-le-source": "FIAPI acquirer_name"
         },
         "acquirer_country": {
           "type": "string",
           "description": "ISO 3166-1 alpha-2 country code of the acquirer.",
           "pattern": "^[A-Z]{2}$",
-          "x-relevant-families": ["ACQUIRING", "ISSUING", "APM"],
+          "x-relevant-families": [
+            "ACQUIRING",
+            "ISSUING",
+            "APM"
+          ],
           "x-le-source": "FIAPI acquirer_country"
         },
         "cash_batch_id": {
           "type": "string",
           "description": "Cash batch identifier used as the Cash Matching key.",
-          "x-relevant-families": ["ACQUIRING", "ISSUING", "APM"],
+          "x-relevant-families": [
+            "ACQUIRING",
+            "ISSUING",
+            "APM"
+          ],
           "x-le-source": "GW cash_batch_id"
         },
         "client_settlement_type": {
           "type": "string",
-          "enum": ["Gross", "Net"],
+          "enum": [
+            "Gross",
+            "Net"
+          ],
           "description": "Whether the client is settled gross or net.",
-          "x-relevant-families": ["ACQUIRING"],
+          "x-relevant-families": [
+            "ACQUIRING"
+          ],
           "x-le-source": "FIAPI client_settlement_type"
         },
         "merchant_category_code": {
           "type": "string",
           "description": "Merchant Category Code (MCC) for the transaction.",
-          "x-relevant-families": ["ACQUIRING", "ISSUING"],
+          "x-relevant-families": [
+            "ACQUIRING",
+            "ISSUING"
+          ],
           "x-le-source": "FIAPI merchant_category_code"
         },
         "source_event_type": {
           "type": "string",
           "description": "Original event type from the source system (e.g. Gateway event_type).",
-          "x-relevant-families": ["ACQUIRING", "ISSUING", "APM"],
+          "x-relevant-families": [
+            "ACQUIRING",
+            "ISSUING",
+            "APM"
+          ],
           "x-le-source": "GW event_type / FIAPI source_event_type"
         },
         "invoice_number": {
           "type": "string",
           "description": "Invoice number associated with the transaction.",
-          "x-relevant-families": ["ACQUIRING", "ISSUING", "GLOBAL_PRICING", "CASH"],
+          "x-relevant-families": [
+            "ACQUIRING",
+            "ISSUING",
+            "GLOBAL_PRICING",
+            "CASH"
+          ],
           "x-le-source": "FIAPI / COS / Cash invoice_number"
         },
         "settlement_service_name": {
           "type": "string",
           "description": "Name of the settlement service used (e.g. ISS, UKNNSS).",
-          "x-relevant-families": ["ACQUIRING"],
+          "x-relevant-families": [
+            "ACQUIRING"
+          ],
           "x-le-source": "SD settlement_service_name"
         },
         "settlement_country_code": {
           "type": "string",
           "description": "Country code of the settlement service.",
-          "x-relevant-families": ["ACQUIRING"],
+          "x-relevant-families": [
+            "ACQUIRING"
+          ],
           "x-le-source": "SD settlement_country_code"
         },
         "central_processing_date": {
           "type": "string",
           "format": "date",
           "description": "Date the transaction was cleared at the scheme (central processing date).",
-          "x-relevant-families": ["ACQUIRING"],
+          "x-relevant-families": [
+            "ACQUIRING"
+          ],
           "x-le-source": "SD central_processing_date"
         },
         "external_id": {
           "type": "string",
           "description": "External identifier for the transaction.",
-          "x-relevant-families": ["ACQUIRING"],
+          "x-relevant-families": [
+            "ACQUIRING"
+          ],
           "x-le-source": "FIAPI external_id"
         },
         "enhanced_action_type": {
           "type": "string",
           "description": "Enhanced action type providing additional detail (e.g. PartialRefund).",
-          "x-relevant-families": ["ACQUIRING", "ISSUING"],
+          "x-relevant-families": [
+            "ACQUIRING",
+            "ISSUING"
+          ],
           "x-le-source": "FIAPI enhanced_action_type"
         },
         "reconciliation_reference": {
           "type": "string",
           "description": "Reconciliation reference that matches Predicted/Async/Actual/Sweep COS records.",
-          "x-relevant-families": ["ACQUIRING"],
+          "x-relevant-families": [
+            "ACQUIRING"
+          ],
           "x-le-source": "COS reconciliation_reference"
         },
         "scheme_partner_identifier": {
           "type": "string",
           "description": "BID/ICA-level scheme identifier for the partner.",
-          "x-relevant-families": ["ACQUIRING"],
+          "x-relevant-families": [
+            "ACQUIRING"
+          ],
           "x-le-source": "COS scheme_partner_identifier"
         },
         "payout_id": {
           "type": "string",
-          "description": "Payout identifier for payout and cash trades.",
-          "x-relevant-families": ["PAYOUT", "CASH"],
+          "description": "Payout identifier for payout and cash transactions.",
+          "x-relevant-families": [
+            "PAYOUT",
+            "CASH"
+          ],
           "x-le-source": "Cash payout_id"
         },
         "billing_descriptor": {
           "type": "string",
           "description": "Billing descriptor shown on client statements.",
-          "x-relevant-families": ["PAYOUT", "CASH"],
+          "x-relevant-families": [
+            "PAYOUT",
+            "CASH"
+          ],
           "x-le-source": "Cash billing_descriptor"
         },
         "is_net_settled": {
           "type": "boolean",
           "description": "Whether this transaction is net-settled at the scheme level.",
-          "x-relevant-families": ["ACQUIRING"],
+          "x-relevant-families": [
+            "ACQUIRING"
+          ],
           "x-le-source": "COS is_net_settled"
         }
       }
     },
     "Leg": {
       "type": "object",
-      "description": "A leg represents a movement of value between two parties within a trade. Leg ID convention: {trade_id}_L1, {trade_id}_L2, etc. Partial pillar data is normal — legs are added as pillars arrive.",
+      "description": "A leg represents a movement of value between two parties within a transaction. Leg ID convention: {transaction_id}_L1, {transaction_id}_L2, etc. Partial pillar data is normal \u2014 legs are added as pillars arrive.",
       "required": [
         "leg_id",
         "leg_type",
@@ -435,7 +694,7 @@
       "properties": {
         "leg_id": {
           "type": "string",
-          "description": "Unique leg identifier within this trade. Convention: {trade_id}_L{n}."
+          "description": "Unique leg identifier within this transaction. Convention: {transaction_id}_L{n}."
         },
         "leg_type": {
           "type": "string",
@@ -459,13 +718,16 @@
         },
         "leg_status": {
           "type": "string",
-          "enum": ["PREDICTED", "ACTUAL"],
+          "enum": [
+            "PREDICTED",
+            "ACTUAL"
+          ],
           "description": "Whether this leg is predicted or actual. COS-sourced legs are PREDICTED; SD-sourced legs are ACTUAL."
         },
         "value_date": {
           "type": "string",
           "format": "date",
-          "description": "Value date for this leg. For FUNDING: future available date from FIAPI Pending event (arrears logic). For SCHEME_SETTLEMENT: SD expected_value_date. For AUTH_HOLD: trade_date."
+          "description": "Value date for this leg. For FUNDING: future available date from FIAPI Pending event (arrears logic). For SCHEME_SETTLEMENT: SD expected_value_date. For AUTH_HOLD: transaction_date."
         },
         "from_party": {
           "$ref": "#/$defs/Party",
@@ -477,7 +739,7 @@
         },
         "reserve_amount": {
           "type": "number",
-          "description": "Rolling reserve amount withheld. Only present on FUNDING legs for ACQUIRING CAPTURE trades. Fixed reserve and collateral movements are represented as separate TRANSFER trades.",
+          "description": "Rolling reserve amount withheld. Only present on FUNDING legs for ACQUIRING CAPTURE transactions. Fixed reserve and collateral movements are represented as separate TRANSFER transactions.",
           "x-le-source": "FIAPI changes.rolling_reserve"
         },
         "reserve_currency": {
@@ -497,12 +759,19 @@
     "Party": {
       "type": "object",
       "description": "Identifies a party in a leg. Parties are one of: SCHEME (card network), CKO_ENTITY (Checkout.com legal entity), or CLIENT_ENTITY (the client).",
-      "required": ["party_type", "party_id"],
+      "required": [
+        "party_type",
+        "party_id"
+      ],
       "additionalProperties": false,
       "properties": {
         "party_type": {
           "type": "string",
-          "enum": ["SCHEME", "CKO_ENTITY", "CLIENT_ENTITY"],
+          "enum": [
+            "SCHEME",
+            "CKO_ENTITY",
+            "CLIENT_ENTITY"
+          ],
           "description": "Type of the party. SCHEME: card network (e.g. Visa, Mastercard). CKO_ENTITY: a Checkout.com legal entity. CLIENT_ENTITY: the client."
         },
         "party_id": {
@@ -545,7 +814,7 @@
             "INCENTIVE",
             "WAIVER"
           ],
-          "description": "Type of fee. This enum is extensible — additional fee types may be added in future versions.",
+          "description": "Type of fee. This enum is extensible \u2014 additional fee types may be added in future versions.",
           "x-extensible": true
         },
         "fee_amount": {
@@ -559,7 +828,10 @@
         },
         "fee_status": {
           "type": "string",
-          "enum": ["PREDICTED", "ACTUAL"],
+          "enum": [
+            "PREDICTED",
+            "ACTUAL"
+          ],
           "description": "Whether this fee is predicted or actual."
         },
         "passthrough": {
@@ -568,7 +840,10 @@
         },
         "fee_amount_type": {
           "type": "string",
-          "enum": ["FIXED", "VARIABLE"],
+          "enum": [
+            "FIXED",
+            "VARIABLE"
+          ],
           "description": "Whether the fee is a fixed amount or a variable (percentage-based) amount."
         },
         "tax_amount": {

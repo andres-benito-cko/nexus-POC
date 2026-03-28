@@ -10,13 +10,13 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NexusTransaction {
+public class NexusBlock {
 
-    @JsonProperty("transaction_id")
-    private String transactionId;
+    @JsonProperty("nexus_id")
+    private String nexusId;
 
-    @JsonProperty("parent_transaction_id")
-    private String parentTransactionId;
+    @JsonProperty("parent_nexus_id")
+    private String parentNexusId;
 
     @JsonProperty("action_id")
     private String actionId;
@@ -42,8 +42,8 @@ public class NexusTransaction {
     @JsonProperty("period_end")
     private String periodEnd;
 
-    @JsonProperty("trades")
-    private List<Trade> trades;
+    @JsonProperty("transactions")
+    private List<Transaction> trades;
 
     @Data
     @NoArgsConstructor
@@ -58,21 +58,21 @@ public class NexusTransaction {
     @Data
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Trade {
-        @JsonProperty("trade_id")
-        private String tradeId;
-        @JsonProperty("trade_family")
-        private String tradeFamily;
-        @JsonProperty("trade_type")
-        private String tradeType;
-        @JsonProperty("trade_status")
-        private String tradeStatus;
-        @JsonProperty("trade_amount")
-        private double tradeAmount;
-        @JsonProperty("trade_currency")
-        private String tradeCurrency;
-        @JsonProperty("trade_date")
-        private String tradeDate;
+    public static class Transaction {
+        @JsonProperty("transaction_id")
+        private String transactionId;
+        @JsonProperty("product_type")
+        private String productType;
+        @JsonProperty("transaction_type")
+        private String transactionType;
+        @JsonProperty("transaction_status")
+        private String transactionStatus;
+        @JsonProperty("transaction_amount")
+        private double transactionAmount;
+        @JsonProperty("transaction_currency")
+        private String transactionCurrency;
+        @JsonProperty("transaction_date")
+        private String transactionDate;
         @JsonProperty("legs")
         private List<Leg> legs;
     }

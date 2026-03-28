@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class TradeMetadata {
+public class TransactionMetadata {
 
     @JsonProperty("scheme_code")
     private String schemeCode;

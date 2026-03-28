@@ -4,6 +4,6 @@ import lombok.Value;
 
 @Value
 public class StateResult {
+    String blockStatus;
     String transactionStatus;
-    String tradeStatus;
 }

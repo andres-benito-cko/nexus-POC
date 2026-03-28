@@ -48,7 +48,7 @@ export default function StateMachineTab({ content }: StateMachineTabProps) {
     // Build nodes — top-to-bottom layout
     const flowNodes: Node[] = stateNames.map((name, idx) => {
       const state = machine.states[name]
-      const colorSet = STATE_COLORS[state.transaction_status] ?? DEFAULT_COLOR
+      const colorSet = STATE_COLORS[state.block_status] ?? DEFAULT_COLOR
 
       return {
         id: name,
@@ -60,10 +60,10 @@ export default function StateMachineTab({ content }: StateMachineTabProps) {
                 {name}
               </div>
               <div style={{ fontSize: 10, color: '#6b7280' }}>
-                txn: {state.transaction_status}
+                block: {state.block_status}
               </div>
               <div style={{ fontSize: 10, color: '#6b7280' }}>
-                trade: {state.trade_status}
+                txn: {state.transaction_status}
               </div>
             </div>
           ),
@@ -163,7 +163,7 @@ export default function StateMachineTab({ content }: StateMachineTabProps) {
       {/* Family selector */}
       <div className="flex items-center gap-3 px-5 py-3 bg-white border-b border-zinc-100">
         <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-          Trade Family
+          Product Type
         </label>
         <div className="flex gap-1 bg-navy-900 rounded-lg p-1">
           {families.map((family) => (

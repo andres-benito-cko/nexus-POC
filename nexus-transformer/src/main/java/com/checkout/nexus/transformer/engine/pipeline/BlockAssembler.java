@@ -15,18 +15,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Assembles a complete {@link NexusTransaction} from a classified and state-resolved context.
+ * Assembles a complete {@link NexusBlock} from a classified and state-resolved context.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TransactionAssembler {
+public class BlockAssembler {
 
     private final NexusEngineConfig config;
     private final ExpressionEvaluator evaluator;
     private final LegAssembler legAssembler;
 
-    public NexusTransaction assemble(LeContext ctx, ClassificationResult classification, StateResult state) {
+    public NexusBlock assemble(LeContext ctx, ClassificationResult classification, StateResult state) {
         Map<String, FieldMapping> fieldMappings = config.getFieldMappings();
 
         // Resolve core entity fields
@@ -37,63 +37,63 @@ public class TransactionAssembler {
         String processedAt = resolveField("processed_at", fieldMappings, ctx, null);
 
         // Build trade amount/currency from gateway or first resolved leg
-        double tradeAmount = 0.0;
-        String tradeCurrency = "EUR";
-        String tradeDate = LocalDate.now().toString();
+        double transactionAmount = 0.0;
+        String transactionCurrency = "EUR";
+        String transactionDate = LocalDate.now().toString();
 
         AmountValue gatewayAmt = resolveAmountValue("GATEWAY.amount", ctx);
         if (gatewayAmt != null) {
-            tradeAmount = gatewayAmt.getValue();
-            tradeCurrency = gatewayAmt.getCurrencyCode();
+            transactionAmount = gatewayAmt.getValue();
+            transactionCurrency = gatewayAmt.getCurrencyCode();
         }
 
         Object gwProcessedOn = ctx.get("GATEWAY.processedOn");
         if (gwProcessedOn != null) {
             String gwDate = gwProcessedOn.toString();
-            tradeDate = gwDate.length() >= 10 ? gwDate.substring(0, 10) : gwDate;
+            transactionDate = gwDate.length() >= 10 ? gwDate.substring(0, 10) : gwDate;
         }
 
         // Build trade metadata
-        TradeMetadata metadata = buildMetadata(fieldMappings, ctx);
+        TransactionMetadata metadata = buildMetadata(fieldMappings, ctx);
 
         // Assemble legs
         List<Leg> legs = legAssembler.assembleLegs(ctx,
-                classification.getTradeFamily(),
-                classification.getTradeType(),
+                classification.getProductType(),
+                classification.getTransactionType(),
                 entityId, ckoEntityId, acquirerEntity, scheme);
 
         // If no legs came out of the config, generate a default FUNDING leg
         if (legs.isEmpty()) {
-            legs = List.of(buildDefaultLeg(ctx, tradeAmount, tradeCurrency, entityId, ckoEntityId));
+            legs = List.of(buildDefaultLeg(ctx, transactionAmount, transactionCurrency, entityId, ckoEntityId));
         }
 
         // Build trade
-        String tradeId = ctx.getRaw().getActionId() + "_1";
-        // Re-apply proper leg IDs based on tradeId
-        legs = reapplyLegIds(legs, tradeId);
+        String transactionId = ctx.getRaw().getActionId() + "_1";
+        // Re-apply proper leg IDs based on transactionId
+        legs = reapplyLegIds(legs, transactionId);
 
-        Trade trade = Trade.builder()
-                .tradeId(tradeId)
-                .tradeFamily(classification.getTradeFamily())
-                .tradeType(classification.getTradeType())
-                .tradeStatus(state.getTradeStatus())
-                .tradeAmount(tradeAmount)
-                .tradeCurrency(tradeCurrency)
-                .tradeDate(tradeDate)
+        Transaction transaction = Transaction.builder()
+                .transactionId(transactionId)
+                .productType(classification.getProductType())
+                .transactionType(classification.getTransactionType())
+                .transactionStatus(state.getTransactionStatus())
+                .transactionAmount(transactionAmount)
+                .transactionCurrency(transactionCurrency)
+                .transactionDate(transactionDate)
                 .metadata(metadata)
                 .legs(legs)
                 .build();
 
-        return NexusTransaction.builder()
-                .transactionId(ctx.getRaw().getActionId())
-                .parentTransactionId(ctx.getRaw().getActionRootId())
+        return NexusBlock.builder()
+                .nexusId(ctx.getRaw().getActionId())
+                .parentNexusId(ctx.getRaw().getActionRootId())
                 .actionId(ctx.getRaw().getActionId())
                 .actionRootId(ctx.getRaw().getActionRootId())
-                .status(state.getTransactionStatus())
+                .status(state.getBlockStatus())
                 .entity(Entity.builder().id(entityId).build())
                 .ckoEntityId(ckoEntityId)
                 .processedAt(processedAt)
-                .trades(List.of(trade))
+                .transactions(List.of(transaction))
                 .build();
     }
 
@@ -122,8 +122,8 @@ public class TransactionAssembler {
         return av;
     }
 
-    private TradeMetadata buildMetadata(Map<String, FieldMapping> mappings, LeContext ctx) {
-        TradeMetadata.TradeMetadataBuilder mb = TradeMetadata.builder();
+    private TransactionMetadata buildMetadata(Map<String, FieldMapping> mappings, LeContext ctx) {
+        TransactionMetadata.TransactionMetadataBuilder mb = TransactionMetadata.builder();
         mb.schemeCode(resolveField("scheme_code", mappings, ctx, null));
         mb.paymentMethod(resolveField("payment_method", mappings, ctx, null));
         mb.acquirerName(resolveField("acquirer_name", mappings, ctx, null));
@@ -167,11 +167,11 @@ public class TransactionAssembler {
                 .build();
     }
 
-    private List<Leg> reapplyLegIds(List<Leg> legs, String tradeId) {
+    private List<Leg> reapplyLegIds(List<Leg> legs, String transactionId) {
         List<Leg> result = new java.util.ArrayList<>();
         int counter = 1;
         for (Leg leg : legs) {
-            String legId = tradeId + "_L" + counter++;
+            String legId = transactionId + "_L" + counter++;
             // Rebuild with correct legId and reapply fee IDs
             List<Fee> fees = reapplyFeeIds(leg.getFees(), legId);
             result.add(Leg.builder()

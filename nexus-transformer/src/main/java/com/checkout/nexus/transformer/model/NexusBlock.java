@@ -16,13 +16,13 @@ import java.util.List;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class NexusTransaction {
+public class NexusBlock {
 
-    @JsonProperty("transaction_id")
-    private String transactionId;
+    @JsonProperty("nexus_id")
+    private String nexusId;
 
-    @JsonProperty("parent_transaction_id")
-    private String parentTransactionId;
+    @JsonProperty("parent_nexus_id")
+    private String parentNexusId;
 
     @JsonProperty("action_id")
     private String actionId;
@@ -48,6 +48,6 @@ public class NexusTransaction {
     @JsonProperty("period_end")
     private String periodEnd;
 
-    @JsonProperty("trades")
-    private List<Trade> trades;
+    @JsonProperty("transactions")
+    private List<Transaction> trades;
 }

@@ -6,7 +6,7 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
-import com.checkout.nexus.transformer.model.NexusTransaction;
+import com.checkout.nexus.transformer.model.NexusBlock;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Validates a {@link NexusTransaction} against the Nexus JSON Schema.
+ * Validates a {@link NexusBlock} against the Nexus JSON Schema.
  *
  * <p>The schema is loaded once from {@code nexus.schema.json} on the classpath.
  * Validation uses the {@code com.networknt:json-schema-validator} library with
@@ -34,12 +34,12 @@ public class NexusValidator {
     }
 
     /**
-     * Validates a {@link NexusTransaction}.
+     * Validates a {@link NexusBlock}.
      *
      * @param tx the transaction to validate
      * @return a {@link ValidationResult} with isValid flag and error messages
      */
-    public ValidationResult validate(NexusTransaction tx) {
+    public ValidationResult validate(NexusBlock tx) {
         try {
             JsonNode node = MAPPER.valueToTree(tx);
             Set<ValidationMessage> messages = schema.validate(node);
@@ -50,8 +50,8 @@ public class NexusValidator {
             for (ValidationMessage msg : messages) {
                 errors.add(msg.getMessage());
             }
-            log.debug("Validation failed for transactionId={} with {} errors",
-                    tx.getTransactionId(), errors.size());
+            log.debug("Validation failed for nexusId={} with {} errors",
+                    tx.getNexusId(), errors.size());
             return new ValidationResult(false, errors);
         } catch (Exception e) {
             log.error("Unexpected error during schema validation", e);

@@ -26,14 +26,14 @@ public class Rule {
 
     private String description;
 
-    @Column(name = "trade_family")
-    private String tradeFamily;
+    @Column(name = "product_type")
+    private String productType;
 
-    @Column(name = "trade_type")
-    private String tradeType;
+    @Column(name = "transaction_type")
+    private String transactionType;
 
-    @Column(name = "trade_status")
-    private String tradeStatus;
+    @Column(name = "transaction_status")
+    private String transactionStatus;
 
     @Column(name = "leg_type")
     private String legType;

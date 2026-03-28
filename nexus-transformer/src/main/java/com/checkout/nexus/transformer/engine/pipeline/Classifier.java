@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Classifies a transaction into a trade family (ACQUIRING / PAYOUT / TOPUP / CASH)
- * and a trade type (CAPTURE / REFUND / etc.) using rules from {@link NexusEngineConfig}.
+ * Classifies a transaction into a product type (ACQUIRING / PAYOUT / TOPUP / CASH)
+ * and a transaction type (CAPTURE / REFUND / etc.) using rules from {@link NexusEngineConfig}.
  */
 @Slf4j
 @Component

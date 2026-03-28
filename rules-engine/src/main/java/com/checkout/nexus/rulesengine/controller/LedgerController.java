@@ -18,10 +18,10 @@ public class LedgerController {
 
     @GetMapping("/entries")
     public List<LedgerEntry> getEntries(
-            @RequestParam(required = false) String transactionId,
+            @RequestParam(required = false) String nexusId,
             @RequestParam(defaultValue = "50") int limit) {
-        if (transactionId != null && !transactionId.isEmpty()) {
-            return ledgerEntryRepository.findByTransactionId(transactionId);
+        if (nexusId != null && !nexusId.isEmpty()) {
+            return ledgerEntryRepository.findByNexusId(nexusId);
         }
         return ledgerEntryRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, limit));
     }
@@ -29,10 +29,10 @@ public class LedgerController {
     @GetMapping("/entries/summary")
     public Map<String, Object> getSummary() {
         long totalEntries = ledgerEntryRepository.countAll();
-        List<String> transactionIds = ledgerEntryRepository.findDistinctTransactionIds();
+        List<String> nexusIds = ledgerEntryRepository.findDistinctNexusIds();
         return Map.of(
             "totalEntries", totalEntries,
-            "totalTransactions", transactionIds.size()
+            "totalTransactions", nexusIds.size()
         );
     }
 }

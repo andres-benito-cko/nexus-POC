@@ -28,11 +28,11 @@ public class LedgerEntry {
     @Column(name = "rule_name")
     private String ruleName;
 
-    @Column(name = "transaction_id", nullable = false)
-    private String transactionId;
+    @Column(name = "nexus_id", nullable = false)
+    private String nexusId;
 
-    @Column(name = "trade_id")
-    private String tradeId;
+    @Column(name = "transaction_id")
+    private String transactionId;
 
     @Column(name = "leg_id")
     private String legId;
@@ -49,14 +49,14 @@ public class LedgerEntry {
     @Column(nullable = false, length = 3)
     private String currency;
 
-    @Column(name = "trade_family")
-    private String tradeFamily;
+    @Column(name = "product_type")
+    private String productType;
 
-    @Column(name = "trade_type")
-    private String tradeType;
+    @Column(name = "transaction_type")
+    private String transactionType;
 
-    @Column(name = "trade_status")
-    private String tradeStatus;
+    @Column(name = "transaction_status")
+    private String transactionStatus;
 
     @Column(name = "created_at", nullable = false)
     @Builder.Default

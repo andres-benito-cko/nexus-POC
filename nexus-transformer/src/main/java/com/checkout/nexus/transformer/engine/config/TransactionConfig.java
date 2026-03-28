@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TradeConfig {
+public class TransactionConfig {
 
     @JsonProperty("legs")
     private List<LegConfig> legs;

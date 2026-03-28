@@ -3,7 +3,7 @@ package com.checkout.nexus.transformer.controller;
 import com.checkout.nexus.transformer.engine.NexusEngine;
 import com.checkout.nexus.transformer.engine.context.LeContext;
 import com.checkout.nexus.transformer.engine.resolver.ResolverRegistry;
-import com.checkout.nexus.transformer.model.NexusTransaction;
+import com.checkout.nexus.transformer.model.NexusBlock;
 import com.checkout.nexus.transformer.model.le.LeLinkedTransaction;
 import com.checkout.nexus.transformer.validation.NexusValidator;
 import lombok.RequiredArgsConstructor;
@@ -29,14 +29,14 @@ public class TestBenchController {
 
     /**
      * Runs an LE transaction through the engine without publishing to Kafka.
-     * Returns the resulting NexusTransaction plus any validation errors.
+     * Returns the resulting NexusBlock plus any validation errors.
      */
     @PostMapping("/transform/test")
     public ResponseEntity<Map<String, Object>> test(@RequestBody LeLinkedTransaction le) {
         Map<String, Object> response = new HashMap<>();
         try {
             LeContext ctx = new LeContext(le);
-            NexusTransaction tx = nexusEngine.transform(ctx);
+            NexusBlock tx = nexusEngine.transform(ctx);
             NexusValidator.ValidationResult result = nexusValidator.validate(tx);
 
             response.put("success", result.isValid());

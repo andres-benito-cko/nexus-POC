@@ -28,17 +28,17 @@ state_machines:
   ACQUIRING:
     states:
       GATEWAY_ONLY:
-        transaction_status: NOT_LIVE
-        trade_status: CAPTURED
+        block_status: NOT_LIVE
+        transaction_status: CAPTURED
       WITH_COS:
-        transaction_status: NOT_LIVE
-        trade_status: CAPTURED
+        block_status: NOT_LIVE
+        transaction_status: CAPTURED
       WITH_FIAPI:
-        transaction_status: LIVE
-        trade_status: CAPTURED
+        block_status: LIVE
+        transaction_status: CAPTURED
       SETTLED:
-        transaction_status: LIVE
-        trade_status: SETTLED
+        block_status: LIVE
+        transaction_status: SETTLED
     transitions:
       - to: SETTLED
         when: "pillars.contains('SD') || pillars.contains('CASH')"
@@ -50,11 +50,11 @@ state_machines:
   PAYOUT:
     states:
       INITIATED:
-        transaction_status: LIVE
-        trade_status: INITIATED
+        block_status: LIVE
+        transaction_status: INITIATED
       SETTLED:
-        transaction_status: LIVE
-        trade_status: SETTLED
+        block_status: LIVE
+        transaction_status: SETTLED
     transitions:
       - to: SETTLED
         when: "pillars.contains('SD') || pillars.contains('CASH')"
@@ -62,11 +62,11 @@ state_machines:
   TOPUP:
     states:
       INITIATED:
-        transaction_status: LIVE
-        trade_status: INITIATED
+        block_status: LIVE
+        transaction_status: INITIATED
       SETTLED:
-        transaction_status: LIVE
-        trade_status: SETTLED
+        block_status: LIVE
+        transaction_status: SETTLED
     transitions:
       - to: SETTLED
         when: "pillars.contains('SD') || pillars.contains('CASH')"
@@ -74,12 +74,12 @@ state_machines:
   CASH:
     states:
       ACTUAL:
-        transaction_status: LIVE
-        trade_status: SETTLED
+        block_status: LIVE
+        transaction_status: SETTLED
     transitions:
       - default: ACTUAL
 
-trades:
+transactions:
   ACQUIRING:
     CAPTURE:
       legs:
@@ -232,7 +232,7 @@ field_mappings:
   processed_at:
     $field: ["GATEWAY.processedOn", "GATEWAY.envelope.originEventTimestamp"]
     $fallback: "$now()"
-  trade_date:
+  transaction_date:
     $field: ["GATEWAY.processedOn"]
     $fallback: "$now()"
   source_event_type:

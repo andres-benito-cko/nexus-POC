@@ -1,6 +1,6 @@
 {
-  "transaction_id": "act_cap_002",
-  "parent_transaction_id": "pay_002",
+  "nexus_id": "act_cap_002",
+  "parent_nexus_id": "pay_002",
   "action_id": "act_cap_002",
   "action_root_id": "pay_002",
   "status": "LIVE",
@@ -9,15 +9,15 @@
   },
   "cko_entity_id": "CKO_UK_LTD",
   "processed_at": "2026-03-18T10:15:00Z",
-  "trades": [
+  "transactions": [
     {
-      "trade_id": "act_cap_002_1",
-      "trade_family": "ACQUIRING",
-      "trade_type": "CAPTURE",
-      "trade_status": "SETTLED",
-      "trade_amount": 100.00,
-      "trade_currency": "USD",
-      "trade_date": "2026-03-18",
+      "transaction_id": "act_cap_002_1",
+      "product_type": "ACQUIRING",
+      "transaction_type": "CAPTURE",
+      "transaction_status": "SETTLED",
+      "transaction_amount": 100.0,
+      "transaction_currency": "USD",
+      "transaction_date": "2026-03-18",
       "metadata": {
         "scheme_code": "VISA",
         "payment_method": "card",
@@ -33,7 +33,7 @@
         {
           "leg_id": "act_cap_002_1_L1",
           "leg_type": "SCHEME_SETTLEMENT",
-          "leg_amount": 92.00,
+          "leg_amount": 92.0,
           "leg_currency": "EUR",
           "leg_status": "ACTUAL",
           "value_date": "2026-03-19",
@@ -66,7 +66,7 @@
         {
           "leg_id": "act_cap_002_1_L2",
           "leg_type": "FUNDING",
-          "leg_amount": 91.20,
+          "leg_amount": 91.2,
           "leg_currency": "EUR",
           "leg_status": "ACTUAL",
           "value_date": "2026-03-20",
@@ -84,7 +84,7 @@
             {
               "fee_id": "act_cap_002_1_L2_F1",
               "fee_type": "PROCESSING_FEE",
-              "fee_amount": 0.20,
+              "fee_amount": 0.2,
               "fee_currency": "EUR",
               "fee_status": "ACTUAL"
             },

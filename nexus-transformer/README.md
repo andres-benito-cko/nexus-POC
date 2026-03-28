@@ -13,7 +13,7 @@ The transformer uses a **config-driven engine** with three layers:
 ### Engine Pipeline
 
 ```
-LeContext → Classifier → StateMachineRunner → TradeAssembler → LegAssembler → TransactionAssembler → NexusValidator
+LeContext → Classifier → StateMachineRunner → TradeAssembler → LegAssembler → BlockAssembler → NexusValidator
 ```
 
 Each step is a focused, testable unit. See `docs/engine-design.md` for the full design.
@@ -34,14 +34,14 @@ Each step is a focused, testable unit. See `docs/engine-design.md` for the full 
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/transactions/{id}` | Get a Nexus transaction by ID |
+| `GET` | `/blocks/{id}` | Get a Nexus transaction by ID |
 | `GET` | `/transactions?limit=N` | List recent Nexus transactions |
 
 ## Kafka
 
 - **Consumes from:** `le.linked.transactions`
-- **Produces to:** `nexus.transactions` (valid) and `nexus.transactions.dlq` (invalid)
-- **Message key:** `transaction_id` (= `action_id`)
+- **Produces to:** `nexus.blocks` (valid) and `nexus.blocks.dlq` (invalid)
+- **Message key:** `nexus_id` (= `action_id`)
 
 ## Configuration
 
@@ -59,9 +59,9 @@ com.checkout.nexus.transformer
 │   ├── expression/   # ExpressionEvaluator (SpEL-based)
 │   ├── resolver/     # FieldResolver interface + built-in resolvers
 │   ├── pipeline/     # Classifier, StateMachineRunner, assemblers
-│   └── NexusEngine   # Entry point: LeContext → NexusTransaction
+│   └── NexusEngine   # Entry point: LeContext → NexusBlock
 ├── validation/       # NexusValidator + DlqHandler
-├── model/            # NexusTransaction, Trade, Leg, Fee POJOs
+├── model/            # NexusBlock, Trade, Leg, Fee POJOs
 │   └── le/           # LE input model (LeLinkedTransaction, pillar events)
 └── service/          # TransformerService (Kafka wiring)
 ```

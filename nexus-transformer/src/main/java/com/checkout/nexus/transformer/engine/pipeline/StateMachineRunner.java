@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * Runs the state machine for a given trade family to determine transaction
- * and trade statuses.
+ * Runs the state machine for a given product type to determine block
+ * and transaction statuses.
  */
 @Slf4j
 @Component
@@ -28,36 +28,36 @@ public class StateMachineRunner {
      * Evaluates transitions in order; returns statuses for the first matching state.
      *
      * @param ctx         current LE context
-     * @param tradeFamily e.g. "ACQUIRING", "PAYOUT", "CASH"
+     * @param productType e.g. "ACQUIRING", "PAYOUT", "CASH"
      * @return resolved {@link StateResult}
      */
-    public StateResult run(LeContext ctx, String tradeFamily) {
-        StateMachineConfig sm = config.getStateMachines().get(tradeFamily);
+    public StateResult run(LeContext ctx, String productType) {
+        StateMachineConfig sm = config.getStateMachines().get(productType);
         if (sm == null) {
-            log.warn("No state machine configured for tradeFamily '{}'; defaulting to NOT_LIVE/CAPTURED", tradeFamily);
+            log.warn("No state machine configured for productType '{}'; defaulting to NOT_LIVE/CAPTURED", productType);
             return new StateResult("NOT_LIVE", "CAPTURED");
         }
 
         List<TransitionRule> transitions = sm.getTransitions();
         for (TransitionRule rule : transitions) {
             if (rule.isDefaultRule()) {
-                return resolveState(sm, rule.effectiveTarget(), tradeFamily);
+                return resolveState(sm, rule.effectiveTarget(), productType);
             }
             if (evaluator.evaluateCondition(rule.getWhen(), ctx)) {
-                return resolveState(sm, rule.effectiveTarget(), tradeFamily);
+                return resolveState(sm, rule.effectiveTarget(), productType);
             }
         }
 
-        log.warn("No transition matched for tradeFamily '{}'; using first state", tradeFamily);
+        log.warn("No transition matched for productType '{}'; using first state", productType);
         return new StateResult("NOT_LIVE", "CAPTURED");
     }
 
-    private StateResult resolveState(StateMachineConfig sm, String stateName, String tradeFamily) {
+    private StateResult resolveState(StateMachineConfig sm, String stateName, String productType) {
         StateConfig state = sm.getStates().get(stateName);
         if (state == null) {
-            log.warn("State '{}' not found in state machine for '{}'; defaulting", stateName, tradeFamily);
+            log.warn("State '{}' not found in state machine for '{}'; defaulting", stateName, productType);
             return new StateResult("NOT_LIVE", "CAPTURED");
         }
-        return new StateResult(state.getTransactionStatus(), state.getTradeStatus());
+        return new StateResult(state.getBlockStatus(), state.getTransactionStatus());
     }
 }

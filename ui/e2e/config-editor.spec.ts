@@ -110,7 +110,7 @@ test.describe('Config Editor', () => {
     await page.waitForTimeout(1000)
 
     // State Machines tab shows family selector buttons for each state machine
-    await expect(page.getByText('Trade Family')).toBeVisible()
+    await expect(page.getByText('Product Type')).toBeVisible()
     // Real 1.0 config has ACQUIRING, PAYOUT, TOPUP, CASH state machines
     await expect(page.getByRole('button', { name: 'ACQUIRING' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'CASH' })).toBeVisible()

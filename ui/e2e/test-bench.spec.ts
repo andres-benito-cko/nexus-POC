@@ -29,25 +29,25 @@ test.describe('Test Bench', () => {
     expect(result.transaction).toBeTruthy()
 
     // Transaction fields are snake_case
-    expect(result.transaction.transaction_id).toBeTruthy()
+    expect(result.transaction.nexus_id).toBeTruthy()
     expect(result.transaction.status).toBeTruthy()
     expect(result.transaction.processed_at).toBeTruthy()
 
-    // Trades should be present and have snake_case fields
-    expect(result.transaction.trades).toBeTruthy()
-    expect(result.transaction.trades.length).toBeGreaterThan(0)
+    // Transactions should be present and have snake_case fields
+    expect(result.transaction.transactions).toBeTruthy()
+    expect(result.transaction.transactions.length).toBeGreaterThan(0)
 
-    const trade = result.transaction.trades[0]
-    expect(trade.trade_id).toBeTruthy()
-    expect(trade.trade_family).toBe('ACQUIRING')
-    expect(trade.trade_type).toBe('CAPTURE')
-    expect(trade.trade_status).toBeTruthy()
+    const txn = result.transaction.transactions[0]
+    expect(txn.transaction_id).toBeTruthy()
+    expect(txn.product_type).toBe('ACQUIRING')
+    expect(txn.transaction_type).toBe('CAPTURE')
+    expect(txn.transaction_status).toBeTruthy()
 
     // Legs should have snake_case fields
-    expect(trade.legs).toBeTruthy()
-    expect(trade.legs.length).toBeGreaterThan(0)
+    expect(txn.legs).toBeTruthy()
+    expect(txn.legs.length).toBeGreaterThan(0)
 
-    const leg = trade.legs[0]
+    const leg = txn.legs[0]
     expect(leg.leg_type).toBeTruthy()
     expect(leg.leg_amount).toBeGreaterThan(0)
     expect(leg.leg_currency).toBe('EUR')
@@ -78,7 +78,7 @@ test.describe('Test Bench', () => {
     await expect(page.getByText('Nexus Transaction Output')).toBeVisible()
   })
 
-  test('Transaction Trace shows trade family and type', async ({ page }) => {
+  test('Transaction Trace shows product type and type', async ({ page }) => {
     await page.goto('/test-bench')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2500)
@@ -89,7 +89,7 @@ test.describe('Test Bench', () => {
     // Transaction Trace section
     await expect(page.getByText('Transaction Trace')).toBeVisible()
 
-    // Should show "ACQUIRING / CAPTURE" in the trade section (from trade_family / trade_type)
+    // Should show "ACQUIRING / CAPTURE" in the transaction section (from product_type / transaction_type)
     await expect(page.getByText('ACQUIRING / CAPTURE')).toBeVisible()
   })
 

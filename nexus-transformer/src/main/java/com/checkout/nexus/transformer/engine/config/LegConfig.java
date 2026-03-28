@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Configuration for a single leg within a trade template.
+ * Configuration for a single leg within a transaction template.
  *
  * <p>{@code amount}, {@code status}, {@code fees}, and {@code rolling_reserve}
  * may each be a plain String literal, a {@link ResolverExpression} ({@code $resolve}),

@@ -25,10 +25,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TransformerService {
 
-    private static final String OUTPUT_TOPIC = "nexus.transactions";
+    private static final String OUTPUT_TOPIC = "nexus.blocks";
 
-    private final KafkaTemplate<String, NexusTransaction> kafkaTemplate;
-    private final TransactionStore transactionStore;
+    private final KafkaTemplate<String, NexusBlock> kafkaTemplate;
+    private final BlockStore blockStore;
     private final NexusEngine nexusEngine;
     private final NexusValidator nexusValidator;
     private final DlqHandler dlqHandler;
@@ -37,7 +37,7 @@ public class TransformerService {
     public void onLeTransaction(LeLinkedTransaction le) {
         log.info("Received LE transaction: actionId={}, version={}", le.getActionId(), le.getTransactionVersion());
 
-        NexusTransaction nexus = null;
+        NexusBlock nexus = null;
         try {
             // Create context and transform via NexusEngine
             LeContext ctx = new LeContext(le);
@@ -46,9 +46,9 @@ public class TransformerService {
             // Validate against schema
             NexusValidator.ValidationResult validation = nexusValidator.validate(nexus);
             if (validation.isValid()) {
-                transactionStore.add(nexus);
-                kafkaTemplate.send(OUTPUT_TOPIC, nexus.getTransactionId(), nexus);
-                log.info("Produced Nexus transaction: transactionId={}, status={}", nexus.getTransactionId(), nexus.getStatus());
+                blockStore.add(nexus);
+                kafkaTemplate.send(OUTPUT_TOPIC, nexus.getNexusId(), nexus);
+                log.info("Produced Nexus transaction: nexusId={}, status={}", nexus.getNexusId(), nexus.getStatus());
             } else {
                 log.warn("Nexus transaction failed validation: actionId={}, errors={}",
                         le.getActionId(), validation.getErrors());
@@ -62,22 +62,22 @@ public class TransformerService {
     }
 
     /**
-     * Transforms a raw LE transaction into a NexusTransaction.
+     * Transforms a raw LE transaction into a NexusBlock.
      * Delegates to {@link NexusEngine} (backward-compatible entry point).
      */
-    public NexusTransaction transform(LeLinkedTransaction le) {
+    public NexusBlock transform(LeLinkedTransaction le) {
         return nexusEngine.transform(new LeContext(le));
     }
 
     // ------------------------------------------------------------------ legacy implementation (preserved for reference)
 
     @SuppressWarnings("unused")
-    private NexusTransaction transformLegacy(LeLinkedTransaction le) {
-        // Determine trade family and type from available data
-        String tradeFamily = determineTradeFamily(le);
-        String tradeType = determineTradeType(le, tradeFamily);
-        String tradeStatus = determineTradeStatus(le);
-        String status = determineTransactionStatus(le);
+    private NexusBlock transformLegacy(LeLinkedTransaction le) {
+        // Determine product type and type from available data
+        String productType = determineProductType(le);
+        String transactionType = determineTransactionType(le, productType);
+        String transactionStatus = determineTransactionStatus(le);
+        String status = determineBlockStatus(le);
 
         // Extract header fields
         String processedAt = extractProcessedAt(le);
@@ -85,53 +85,53 @@ public class TransformerService {
         String ckoEntityId = extractCkoEntityId(le);
 
         // Build trade amount/currency from gateway
-        double tradeAmount = 0;
-        String tradeCurrency = "EUR";
-        String tradeDate = LocalDate.now().toString();
+        double transactionAmount = 0;
+        String transactionCurrency = "EUR";
+        String transactionDate = LocalDate.now().toString();
 
         if (!le.getGatewayEvents().isEmpty()) {
             GatewayEvent gw = le.getGatewayEvents().get(0);
             if (gw.getAmount() != null) {
-                tradeAmount = gw.getAmount().getValue();
-                tradeCurrency = gw.getAmount().getCurrencyCode();
+                transactionAmount = gw.getAmount().getValue();
+                transactionCurrency = gw.getAmount().getCurrencyCode();
             }
             if (gw.getProcessedOn() != null) {
-                tradeDate = gw.getProcessedOn().substring(0, 10);
+                transactionDate = gw.getProcessedOn().substring(0, 10);
             }
         }
 
         // Build metadata
-        TradeMetadata metadata = buildMetadata(le);
+        TransactionMetadata metadata = buildMetadata(le);
 
         // Build legs
-        List<Leg> legs = buildLegs(le, tradeFamily, tradeType, tradeAmount, tradeCurrency, entityId, ckoEntityId);
+        List<Leg> legs = buildLegs(le, productType, transactionType, transactionAmount, transactionCurrency, entityId, ckoEntityId);
 
-        Trade trade = Trade.builder()
-            .tradeId(le.getActionId() + "_1")
-            .tradeFamily(tradeFamily)
-            .tradeType(tradeType)
-            .tradeStatus(tradeStatus)
-            .tradeAmount(tradeAmount)
-            .tradeCurrency(tradeCurrency)
-            .tradeDate(tradeDate)
+        Transaction transaction = Transaction.builder()
+            .transactionId(le.getActionId() + "_1")
+            .productType(productType)
+            .transactionType(transactionType)
+            .transactionStatus(transactionStatus)
+            .transactionAmount(transactionAmount)
+            .transactionCurrency(transactionCurrency)
+            .transactionDate(transactionDate)
             .metadata(metadata)
             .legs(legs)
             .build();
 
-        return NexusTransaction.builder()
-            .transactionId(le.getActionId())
-            .parentTransactionId(le.getActionRootId())
+        return NexusBlock.builder()
+            .nexusId(le.getActionId())
+            .parentNexusId(le.getActionRootId())
             .actionId(le.getActionId())
             .actionRootId(le.getActionRootId())
             .status(status)
             .entity(Entity.builder().id(entityId).build())
             .ckoEntityId(ckoEntityId)
             .processedAt(processedAt)
-            .trades(List.of(trade))
+            .transactions(List.of(transaction))
             .build();
     }
 
-    private String determineTradeFamily(LeLinkedTransaction le) {
+    private String determineProductType(LeLinkedTransaction le) {
         if (!le.getBalancesChangedEvents().isEmpty()) {
             BalancesChangedEvent bce = le.getBalancesChangedEvents().get(0);
             if (bce.getMetadata() != null && bce.getMetadata().getActionType() != null) {
@@ -147,7 +147,7 @@ public class TransformerService {
         return "ACQUIRING";
     }
 
-    private String determineTradeType(LeLinkedTransaction le, String tradeFamily) {
+    private String determineTransactionType(LeLinkedTransaction le, String productType) {
         // Check FIAPI action type first
         if (!le.getBalancesChangedEvents().isEmpty()) {
             BalancesChangedEvent bce = le.getBalancesChangedEvents().get(0);
@@ -185,24 +185,24 @@ public class TransformerService {
             }
         }
 
-        if ("CASH".equals(tradeFamily)) return "SETTLEMENT";
+        if ("CASH".equals(productType)) return "SETTLEMENT";
 
         return "CAPTURE"; // Default
     }
 
-    private String determineTradeStatus(LeLinkedTransaction le) {
+    private String determineTransactionStatus(LeLinkedTransaction le) {
         boolean hasSd = !le.getSchemeSettlementEvents().isEmpty();
         boolean hasCash = !le.getCashEvents().isEmpty();
         boolean hasFiapi = !le.getBalancesChangedEvents().isEmpty();
 
         if (hasSd || hasCash) return "SETTLED";
 
-        // Determine from trade type
-        String tradeFamily = determineTradeFamily(le);
-        String tradeType = determineTradeType(le, tradeFamily);
+        // Determine from transaction type
+        String productType = determineProductType(le);
+        String transactionType = determineTransactionType(le, productType);
 
         if (hasFiapi) {
-            return switch (tradeType) {
+            return switch (transactionType) {
                 case "CAPTURE" -> "CAPTURED";
                 case "REFUND" -> "INITIATED";
                 case "AUTH" -> "AUTHORISED";
@@ -213,7 +213,7 @@ public class TransformerService {
         }
 
         // GW only
-        return switch (tradeType) {
+        return switch (transactionType) {
             case "CAPTURE" -> "CAPTURED";
             case "REFUND" -> "INITIATED";
             case "AUTH" -> "AUTHORISED";
@@ -222,7 +222,7 @@ public class TransformerService {
         };
     }
 
-    private String determineTransactionStatus(LeLinkedTransaction le) {
+    private String determineBlockStatus(LeLinkedTransaction le) {
         boolean hasFiapi = !le.getBalancesChangedEvents().isEmpty();
         boolean hasSd = !le.getSchemeSettlementEvents().isEmpty();
 
@@ -280,8 +280,8 @@ public class TransformerService {
         return "CKO_UNKNOWN";
     }
 
-    private TradeMetadata buildMetadata(LeLinkedTransaction le) {
-        TradeMetadata.TradeMetadataBuilder mb = TradeMetadata.builder();
+    private TransactionMetadata buildMetadata(LeLinkedTransaction le) {
+        TransactionMetadata.TransactionMetadataBuilder mb = TransactionMetadata.builder();
 
         // GW fields
         if (!le.getGatewayEvents().isEmpty()) {
@@ -344,10 +344,10 @@ public class TransformerService {
         return mb.build();
     }
 
-    private List<Leg> buildLegs(LeLinkedTransaction le, String tradeFamily, String tradeType,
-            double tradeAmount, String tradeCurrency, String entityId, String ckoEntityId) {
+    private List<Leg> buildLegs(LeLinkedTransaction le, String productType, String transactionType,
+            double transactionAmount, String transactionCurrency, String entityId, String ckoEntityId) {
         List<Leg> legs = new ArrayList<>();
-        String tradeId = le.getActionId() + "_1";
+        String transactionId = le.getActionId() + "_1";
         int legCounter = 1;
 
         boolean hasSd = !le.getSchemeSettlementEvents().isEmpty();
@@ -356,12 +356,12 @@ public class TransformerService {
         boolean hasCash = !le.getCashEvents().isEmpty();
 
         // Build SCHEME_SETTLEMENT leg for ACQUIRING captures/refunds/chargebacks
-        if ("ACQUIRING".equals(tradeFamily) &&
-                ("CAPTURE".equals(tradeType) || "REFUND".equals(tradeType) || "CHARGEBACK".equals(tradeType))) {
+        if ("ACQUIRING".equals(productType) &&
+                ("CAPTURE".equals(transactionType) || "REFUND".equals(transactionType) || "CHARGEBACK".equals(transactionType))) {
 
-            String ssLegId = tradeId + "_L" + legCounter++;
-            double ssAmount = tradeAmount;
-            String ssCurrency = tradeCurrency;
+            String ssLegId = transactionId + "_L" + legCounter++;
+            double ssAmount = transactionAmount;
+            String ssCurrency = transactionCurrency;
             String ssStatus = "PREDICTED";
             String ssValueDate = LocalDate.now().plusDays(1).toString();
 
@@ -383,11 +383,11 @@ public class TransformerService {
                 }
             }
 
-            // Determine direction based on trade type
+            // Determine direction based on transaction type
             Party fromParty, toParty;
             String acquirerEntity = extractAcquirerEntity(le, ckoEntityId);
 
-            if ("CAPTURE".equals(tradeType)) {
+            if ("CAPTURE".equals(transactionType)) {
                 // SCHEME -> CKO_ENTITY
                 fromParty = Party.builder().partyType("SCHEME").partyId(extractScheme(le)).build();
                 toParty = Party.builder().partyType("CKO_ENTITY").partyId(acquirerEntity)
@@ -416,12 +416,12 @@ public class TransformerService {
         }
 
         // Build FUNDING leg for ACQUIRING, PAYOUT, TOPUP
-        if (hasFiapi && ("ACQUIRING".equals(tradeFamily) || "PAYOUT".equals(tradeFamily) || "TOPUP".equals(tradeFamily))) {
+        if (hasFiapi && ("ACQUIRING".equals(productType) || "PAYOUT".equals(productType) || "TOPUP".equals(productType))) {
             BalancesChangedEvent bce = le.getBalancesChangedEvents().get(0);
-            String fLegId = tradeId + "_L" + legCounter++;
+            String fLegId = transactionId + "_L" + legCounter++;
 
-            double fAmount = tradeAmount;
-            String fCurrency = tradeCurrency;
+            double fAmount = transactionAmount;
+            String fCurrency = transactionCurrency;
             String fValueDate = LocalDate.now().plusDays(2).toString();
 
             if (bce.getMetadata() != null) {
@@ -441,7 +441,7 @@ public class TransformerService {
 
             // Determine direction
             Party fromParty, toParty;
-            if ("REFUND".equals(tradeType) || "CHARGEBACK".equals(tradeType) || "TOPUP".equals(tradeFamily)) {
+            if ("REFUND".equals(transactionType) || "CHARGEBACK".equals(transactionType) || "TOPUP".equals(productType)) {
                 // CLIENT -> CKO
                 fromParty = Party.builder().partyType("CLIENT_ENTITY").partyId(entityId)
                     .currencyAccountId("ca_" + entityId + "_" + fCurrency.toLowerCase() + "_001").build();
@@ -488,12 +488,12 @@ public class TransformerService {
         }
 
         // Build FUNDING leg for CASH standalone
-        if ("CASH".equals(tradeFamily) && hasCash) {
+        if ("CASH".equals(productType) && hasCash) {
             CashEvent cash = le.getCashEvents().get(0);
-            String cLegId = tradeId + "_L" + legCounter++;
+            String cLegId = transactionId + "_L" + legCounter++;
 
-            double cAmount = cash.getStandardPayload() != null ? cash.getStandardPayload().getAmount().getValue() : tradeAmount;
-            String cCurrency = cash.getStandardPayload() != null ? cash.getStandardPayload().getAmount().getCurrencyCode() : tradeCurrency;
+            double cAmount = cash.getStandardPayload() != null ? cash.getStandardPayload().getAmount().getValue() : transactionAmount;
+            String cCurrency = cash.getStandardPayload() != null ? cash.getStandardPayload().getAmount().getCurrencyCode() : transactionCurrency;
             String cValueDate = cash.getStandardMetadata() != null && cash.getStandardMetadata().getValueDate() != null
                 ? cash.getStandardMetadata().getValueDate() : LocalDate.now().toString();
 
@@ -525,10 +525,10 @@ public class TransformerService {
         // Ensure at least one leg exists
         if (legs.isEmpty()) {
             legs.add(Leg.builder()
-                .legId(tradeId + "_L1")
+                .legId(transactionId + "_L1")
                 .legType("FUNDING")
-                .legAmount(tradeAmount)
-                .legCurrency(tradeCurrency)
+                .legAmount(transactionAmount)
+                .legCurrency(transactionCurrency)
                 .legStatus("PREDICTED")
                 .valueDate(LocalDate.now().plusDays(1).toString())
                 .fromParty(Party.builder().partyType("CKO_ENTITY").partyId(ckoEntityId).build())

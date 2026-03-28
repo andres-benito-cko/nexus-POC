@@ -3,7 +3,7 @@ package com.checkout.nexus.transformer.engine.pipeline;
 import com.checkout.nexus.transformer.engine.config.LegConfig;
 import com.checkout.nexus.transformer.engine.config.NexusEngineConfig;
 import com.checkout.nexus.transformer.engine.config.ResolverExpression;
-import com.checkout.nexus.transformer.engine.config.TradeConfig;
+import com.checkout.nexus.transformer.engine.config.TransactionConfig;
 import com.checkout.nexus.transformer.engine.context.LeContext;
 import com.checkout.nexus.transformer.engine.expression.ExpressionEvaluator;
 import com.checkout.nexus.transformer.model.Fee;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Assembles {@link Leg} objects for a given trade family and type
+ * Assembles {@link Leg} objects for a given product type and type
  * using the leg templates defined in {@link NexusEngineConfig}.
  */
 @Slf4j
@@ -33,44 +33,44 @@ public class LegAssembler {
     private final ExpressionEvaluator evaluator;
 
     /**
-     * Assembles all legs for the given trade family/type combination.
+     * Assembles all legs for the given product type/type combination.
      *
      * @param ctx            current LE context
-     * @param tradeFamily    e.g. "ACQUIRING"
-     * @param tradeType      e.g. "CAPTURE"
+     * @param productType    e.g. "ACQUIRING"
+     * @param transactionType      e.g. "CAPTURE"
      * @param entityId       resolved client entity id
      * @param ckoEntityId    resolved CKO settlement entity id
      * @param acquirerEntity resolved CKO acquirer entity id
      * @param scheme         resolved scheme code (e.g. "VISA")
      * @return list of assembled legs (may be empty)
      */
-    public List<Leg> assembleLegs(LeContext ctx, String tradeFamily, String tradeType,
+    public List<Leg> assembleLegs(LeContext ctx, String productType, String transactionType,
                                    String entityId, String ckoEntityId, String acquirerEntity, String scheme) {
-        Map<String, Map<String, TradeConfig>> trades = config.getTrades();
+        Map<String, Map<String, TransactionConfig>> transactions = config.getTransactions();
         if (trades == null) {
             return Collections.emptyList();
         }
-        Map<String, TradeConfig> familyTrades = trades.get(tradeFamily);
+        Map<String, TransactionConfig> familyTrades = trades.get(productType);
         if (familyTrades == null) {
             return Collections.emptyList();
         }
-        TradeConfig tradeCfg = familyTrades.get(tradeType);
-        if (tradeCfg == null || tradeCfg.getLegs() == null) {
+        TransactionConfig transactionCfg = familyTrades.get(transactionType);
+        if (transactionCfg == null || transactionCfg.getLegs() == null) {
             return Collections.emptyList();
         }
 
-        // Derive a base tradeId for leg IDs — we use a placeholder here
-        String tradeId = "trade";
+        // Derive a base transactionId for leg IDs — we use a placeholder here
+        String transactionId = "txn";
         List<Leg> legs = new ArrayList<>();
         int legCounter = 1;
 
-        for (LegConfig legCfg : tradeCfg.getLegs()) {
+        for (LegConfig legCfg : transactionCfg.getLegs()) {
             // Evaluate the 'when' condition — skip leg when false
             if (legCfg.getWhen() != null && !evaluator.evaluateCondition(legCfg.getWhen(), ctx)) {
                 continue;
             }
 
-            String legId = tradeId + "_L" + legCounter++;
+            String legId = transactionId + "_L" + legCounter++;
 
             // Resolve amount
             AmountValue amountValue = resolveAmount(legCfg.getAmount(), ctx);

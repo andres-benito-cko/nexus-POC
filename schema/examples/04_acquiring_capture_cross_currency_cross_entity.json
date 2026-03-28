@@ -1,6 +1,6 @@
 {
-  "transaction_id": "act_cap_004",
-  "parent_transaction_id": "pay_004",
+  "nexus_id": "act_cap_004",
+  "parent_nexus_id": "pay_004",
   "action_id": "act_cap_004",
   "action_root_id": "pay_004",
   "status": "LIVE",
@@ -9,15 +9,15 @@
   },
   "cko_entity_id": "CKO_UK_LTD",
   "processed_at": "2026-03-17T16:45:00Z",
-  "trades": [
+  "transactions": [
     {
-      "trade_id": "act_cap_004_1",
-      "trade_family": "ACQUIRING",
-      "trade_type": "CAPTURE",
-      "trade_status": "SETTLED",
-      "trade_amount": 100.00,
-      "trade_currency": "USD",
-      "trade_date": "2026-03-17",
+      "transaction_id": "act_cap_004_1",
+      "product_type": "ACQUIRING",
+      "transaction_type": "CAPTURE",
+      "transaction_status": "SETTLED",
+      "transaction_amount": 100.0,
+      "transaction_currency": "USD",
+      "transaction_date": "2026-03-17",
       "metadata": {
         "scheme_code": "VISA",
         "payment_method": "card",
@@ -33,7 +33,7 @@
         {
           "leg_id": "act_cap_004_1_L1",
           "leg_type": "SCHEME_SETTLEMENT",
-          "leg_amount": 92.00,
+          "leg_amount": 92.0,
           "leg_currency": "EUR",
           "leg_status": "ACTUAL",
           "value_date": "2026-03-18",
@@ -84,7 +84,7 @@
             {
               "fee_id": "act_cap_004_1_L2_F1",
               "fee_type": "PROCESSING_FEE",
-              "fee_amount": 0.20,
+              "fee_amount": 0.2,
               "fee_currency": "EUR",
               "fee_status": "ACTUAL"
             },
@@ -100,13 +100,13 @@
       ]
     },
     {
-      "trade_id": "act_cap_004_2",
-      "trade_family": "TRANSFER",
-      "trade_type": "DEBIT",
-      "trade_status": "SETTLED",
-      "trade_amount": 91.33,
-      "trade_currency": "EUR",
-      "trade_date": "2026-03-17",
+      "transaction_id": "act_cap_004_2",
+      "product_type": "TRANSFER",
+      "transaction_type": "DEBIT",
+      "transaction_status": "SETTLED",
+      "transaction_amount": 91.33,
+      "transaction_currency": "EUR",
+      "transaction_date": "2026-03-17",
       "metadata": {},
       "legs": [
         {

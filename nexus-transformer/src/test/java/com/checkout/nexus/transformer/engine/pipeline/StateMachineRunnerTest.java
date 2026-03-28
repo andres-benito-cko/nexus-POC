@@ -40,8 +40,8 @@ class StateMachineRunnerTest {
         LeContext ctx = new LeContext(tx);
 
         StateResult result = runner.run(ctx, "ACQUIRING");
-        assertThat(result.getTransactionStatus()).isEqualTo("NOT_LIVE");
-        assertThat(result.getTradeStatus()).isEqualTo("CAPTURED");
+        assertThat(result.getBlockStatus()).isEqualTo("NOT_LIVE");
+        assertThat(result.getTransactionStatus()).isEqualTo("CAPTURED");
     }
 
     @Test
@@ -53,8 +53,8 @@ class StateMachineRunnerTest {
         LeContext ctx = new LeContext(tx);
 
         StateResult result = runner.run(ctx, "ACQUIRING");
-        assertThat(result.getTransactionStatus()).isEqualTo("LIVE");
-        assertThat(result.getTradeStatus()).isEqualTo("SETTLED");
+        assertThat(result.getBlockStatus()).isEqualTo("LIVE");
+        assertThat(result.getTransactionStatus()).isEqualTo("SETTLED");
     }
 
     @Test
@@ -66,8 +66,8 @@ class StateMachineRunnerTest {
         LeContext ctx = new LeContext(tx);
 
         StateResult result = runner.run(ctx, "ACQUIRING");
-        assertThat(result.getTransactionStatus()).isEqualTo("LIVE");
-        assertThat(result.getTradeStatus()).isEqualTo("CAPTURED");
+        assertThat(result.getBlockStatus()).isEqualTo("LIVE");
+        assertThat(result.getTransactionStatus()).isEqualTo("CAPTURED");
     }
 
     @Test
@@ -79,8 +79,8 @@ class StateMachineRunnerTest {
         LeContext ctx = new LeContext(tx);
 
         StateResult result = runner.run(ctx, "CASH");
-        assertThat(result.getTransactionStatus()).isEqualTo("LIVE");
-        assertThat(result.getTradeStatus()).isEqualTo("SETTLED");
+        assertThat(result.getBlockStatus()).isEqualTo("LIVE");
+        assertThat(result.getTransactionStatus()).isEqualTo("SETTLED");
     }
 
     @Test
@@ -92,7 +92,7 @@ class StateMachineRunnerTest {
         LeContext ctx = new LeContext(tx);
 
         StateResult result = runner.run(ctx, "PAYOUT");
-        assertThat(result.getTransactionStatus()).isEqualTo("LIVE");
-        assertThat(result.getTradeStatus()).isEqualTo("INITIATED");
+        assertThat(result.getBlockStatus()).isEqualTo("LIVE");
+        assertThat(result.getTransactionStatus()).isEqualTo("INITIATED");
     }
 }

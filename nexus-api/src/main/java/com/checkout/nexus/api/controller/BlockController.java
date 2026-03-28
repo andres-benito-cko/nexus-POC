@@ -15,16 +15,16 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
-@RequestMapping("/transactions")
+@RequestMapping("/blocks")
 @RequiredArgsConstructor
-public class TransactionController {
+public class BlockController {
 
     private final EventStreamService eventStreamService;
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @GetMapping
     public List<JsonNode> getRecent(@RequestParam(defaultValue = "50") int limit) {
-        return eventStreamService.getRecentTransactions(limit).stream()
+        return eventStreamService.getRecentBlocks(limit).stream()
                 .map(json -> {
                     try {
                         return MAPPER.readTree(json);

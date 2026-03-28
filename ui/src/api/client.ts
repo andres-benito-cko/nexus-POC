@@ -22,25 +22,25 @@ export interface DlqEvent {
   replayedAt: string | null
 }
 
-export interface NexusTrade {
-  trade_id: string
-  trade_family: string
-  trade_type: string
-  trade_status: string
-  trade_amount: number
-  trade_currency: string
+export interface NexusTransaction {
+  transaction_id: string
+  product_type: string
+  transaction_type: string
+  transaction_status: string
+  transaction_amount: number
+  transaction_currency: string
   legs?: unknown[]
 }
 
-export interface NexusTransaction {
-  transaction_id: string
+export interface NexusBlock {
+  nexus_id: string
   action_id: string
   action_root_id: string
   status: string
   processed_at: string
   cko_entity_id?: string
   entity?: { id: string }
-  trades?: NexusTrade[]
+  transactions?: NexusTransaction[]
 }
 
 // --- Fetch helpers ---
@@ -79,8 +79,8 @@ export function replayDlq(id: string): Promise<void> {
   return fetchJson(`/dlq/${id}/replay`, { method: 'POST' })
 }
 
-export function getTransactions(): Promise<NexusTransaction[]> {
-  return fetchJson('/transactions')
+export function getTransactions(): Promise<NexusBlock[]> {
+  return fetchJson('/blocks')
 }
 
 export function createConfig(config: { version: string; content: string; createdBy: string }): Promise<EngineConfig> {
@@ -113,7 +113,7 @@ export function validateConfig(content: string): Promise<ValidationResult> {
 
 export interface TestBenchResult {
   success: boolean
-  transaction?: NexusTransaction & Record<string, unknown>
+  transaction?: NexusBlock & Record<string, unknown>
   errors?: string[]
 }
 

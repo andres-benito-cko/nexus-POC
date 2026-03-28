@@ -26,11 +26,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class EventStreamService extends TextWebSocketHandler {
 
-    private static final int MAX_TRANSACTIONS = 200;
+    private static final int MAX_BLOCKS = 200;
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
-    private final Deque<String> recentTransactions = new ArrayDeque<>();
+    private final Deque<String> recentBlocks = new ArrayDeque<>();
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Value("${nexus.le.topic:le.linked.transactions}")
@@ -62,15 +62,15 @@ public class EventStreamService extends TextWebSocketHandler {
 
     // ------------------------------------------------------------------ Kafka consumers
 
-    @KafkaListener(topics = "nexus.transactions", groupId = "nexus-api-live")
-    public void onNexusTransaction(String payload) {
-        synchronized (recentTransactions) {
-            recentTransactions.addFirst(payload);
-            while (recentTransactions.size() > MAX_TRANSACTIONS) {
-                recentTransactions.removeLast();
+    @KafkaListener(topics = "nexus.blocks", groupId = "nexus-api-live")
+    public void onNexusBlock(String payload) {
+        synchronized (recentBlocks) {
+            recentBlocks.addFirst(payload);
+            while (recentBlocks.size() > MAX_BLOCKS) {
+                recentBlocks.removeLast();
             }
         }
-        broadcast("NEXUS_TRANSACTION", payload);
+        broadcast("NEXUS_BLOCK", payload);
     }
 
     // ------------------------------------------------------------------ Public API
@@ -90,11 +90,11 @@ public class EventStreamService extends TextWebSocketHandler {
         }
     }
 
-    public List<String> getRecentTransactions(int limit) {
-        synchronized (recentTransactions) {
+    public List<String> getRecentBlocks(int limit) {
+        synchronized (recentBlocks) {
             List<String> result = new ArrayList<>();
             int count = 0;
-            for (String tx : recentTransactions) {
+            for (String tx : recentBlocks) {
                 if (count++ >= limit) break;
                 result.add(tx);
             }

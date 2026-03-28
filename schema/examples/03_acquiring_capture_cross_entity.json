@@ -1,6 +1,6 @@
 {
-  "transaction_id": "act_cap_003",
-  "parent_transaction_id": "pay_003",
+  "nexus_id": "act_cap_003",
+  "parent_nexus_id": "pay_003",
   "action_id": "act_cap_003",
   "action_root_id": "pay_003",
   "status": "NOT_LIVE",
@@ -9,15 +9,15 @@
   },
   "cko_entity_id": "CKO_UK_LTD",
   "processed_at": "2026-03-19T09:00:00Z",
-  "trades": [
+  "transactions": [
     {
-      "trade_id": "act_cap_003_1",
-      "trade_family": "ACQUIRING",
-      "trade_type": "CAPTURE",
-      "trade_status": "CAPTURED",
-      "trade_amount": 100.00,
-      "trade_currency": "EUR",
-      "trade_date": "2026-03-19",
+      "transaction_id": "act_cap_003_1",
+      "product_type": "ACQUIRING",
+      "transaction_type": "CAPTURE",
+      "transaction_status": "CAPTURED",
+      "transaction_amount": 100.0,
+      "transaction_currency": "EUR",
+      "transaction_date": "2026-03-19",
       "metadata": {
         "scheme_code": "VISA",
         "payment_method": "card",
@@ -30,7 +30,7 @@
         {
           "leg_id": "act_cap_003_1_L1",
           "leg_type": "SCHEME_SETTLEMENT",
-          "leg_amount": 100.00,
+          "leg_amount": 100.0,
           "leg_currency": "EUR",
           "leg_status": "PREDICTED",
           "value_date": "2026-03-20",
@@ -47,7 +47,7 @@
             {
               "fee_id": "act_cap_003_1_L1_F1",
               "fee_type": "INTERCHANGE",
-              "fee_amount": 0.60,
+              "fee_amount": 0.6,
               "fee_currency": "EUR",
               "fee_status": "PREDICTED"
             },
@@ -63,7 +63,7 @@
         {
           "leg_id": "act_cap_003_1_L2",
           "leg_type": "FUNDING",
-          "leg_amount": 100.00,
+          "leg_amount": 100.0,
           "leg_currency": "EUR",
           "leg_status": "PREDICTED",
           "value_date": "2026-03-21",
@@ -88,7 +88,7 @@
             {
               "fee_id": "act_cap_003_1_L2_F2",
               "fee_type": "ACQUIRER_FEE",
-              "fee_amount": 0.10,
+              "fee_amount": 0.1,
               "fee_currency": "EUR",
               "fee_status": "PREDICTED"
             }
@@ -97,13 +97,13 @@
       ]
     },
     {
-      "trade_id": "act_cap_003_2",
-      "trade_family": "TRANSFER",
-      "trade_type": "DEBIT",
-      "trade_status": "SETTLED",
-      "trade_amount": 99.28,
-      "trade_currency": "EUR",
-      "trade_date": "2026-03-19",
+      "transaction_id": "act_cap_003_2",
+      "product_type": "TRANSFER",
+      "transaction_type": "DEBIT",
+      "transaction_status": "SETTLED",
+      "transaction_amount": 99.28,
+      "transaction_currency": "EUR",
+      "transaction_date": "2026-03-19",
       "metadata": {},
       "legs": [
         {

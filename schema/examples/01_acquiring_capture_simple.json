@@ -1,6 +1,6 @@
 {
-  "transaction_id": "act_cap_001",
-  "parent_transaction_id": "pay_001",
+  "nexus_id": "act_cap_001",
+  "parent_nexus_id": "pay_001",
   "action_id": "act_cap_001",
   "action_root_id": "pay_001",
   "status": "NOT_LIVE",
@@ -9,15 +9,15 @@
   },
   "cko_entity_id": "CKO_UK_LTD",
   "processed_at": "2026-03-20T14:30:00Z",
-  "trades": [
+  "transactions": [
     {
-      "trade_id": "act_cap_001_1",
-      "trade_family": "ACQUIRING",
-      "trade_type": "CAPTURE",
-      "trade_status": "CAPTURED",
-      "trade_amount": 100.00,
-      "trade_currency": "EUR",
-      "trade_date": "2026-03-20",
+      "transaction_id": "act_cap_001_1",
+      "product_type": "ACQUIRING",
+      "transaction_type": "CAPTURE",
+      "transaction_status": "CAPTURED",
+      "transaction_amount": 100.0,
+      "transaction_currency": "EUR",
+      "transaction_date": "2026-03-20",
       "metadata": {
         "scheme_code": "VISA",
         "payment_method": "card",
@@ -30,7 +30,7 @@
         {
           "leg_id": "act_cap_001_1_L1",
           "leg_type": "SCHEME_SETTLEMENT",
-          "leg_amount": 100.00,
+          "leg_amount": 100.0,
           "leg_currency": "EUR",
           "leg_status": "PREDICTED",
           "value_date": "2026-03-21",
@@ -47,14 +47,14 @@
             {
               "fee_id": "act_cap_001_1_L1_F1",
               "fee_type": "INTERCHANGE",
-              "fee_amount": 0.50,
+              "fee_amount": 0.5,
               "fee_currency": "EUR",
               "fee_status": "PREDICTED"
             },
             {
               "fee_id": "act_cap_001_1_L1_F2",
               "fee_type": "SCHEME_FEE",
-              "fee_amount": 0.10,
+              "fee_amount": 0.1,
               "fee_currency": "EUR",
               "fee_status": "PREDICTED"
             }
@@ -63,7 +63,7 @@
         {
           "leg_id": "act_cap_001_1_L2",
           "leg_type": "FUNDING",
-          "leg_amount": 100.00,
+          "leg_amount": 100.0,
           "leg_currency": "EUR",
           "leg_status": "PREDICTED",
           "value_date": "2026-03-22",
@@ -77,20 +77,20 @@
             "party_id": "cli_acme_corp",
             "currency_account_id": "ca_acme_eur_001"
           },
-          "reserve_amount": 2.00,
+          "reserve_amount": 2.0,
           "reserve_currency": "EUR",
           "fees": [
             {
               "fee_id": "act_cap_001_1_L2_F1",
               "fee_type": "PROCESSING_FEE",
-              "fee_amount": 0.20,
+              "fee_amount": 0.2,
               "fee_currency": "EUR",
               "fee_status": "PREDICTED"
             },
             {
               "fee_id": "act_cap_001_1_L2_F2",
               "fee_type": "ACQUIRER_FEE",
-              "fee_amount": 0.10,
+              "fee_amount": 0.1,
               "fee_currency": "EUR",
               "fee_status": "PREDICTED"
             }

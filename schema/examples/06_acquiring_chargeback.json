@@ -1,6 +1,6 @@
 {
-  "transaction_id": "act_cb_001",
-  "parent_transaction_id": "pay_001",
+  "nexus_id": "act_cb_001",
+  "parent_nexus_id": "pay_001",
   "action_id": "act_cb_001",
   "action_root_id": "pay_001",
   "status": "LIVE",
@@ -9,15 +9,15 @@
   },
   "cko_entity_id": "CKO_UK_LTD",
   "processed_at": "2026-03-23T08:30:00Z",
-  "trades": [
+  "transactions": [
     {
-      "trade_id": "act_cb_001_1",
-      "trade_family": "ACQUIRING",
-      "trade_type": "CHARGEBACK",
-      "trade_status": "RECEIVED",
-      "trade_amount": 100.00,
-      "trade_currency": "EUR",
-      "trade_date": "2026-03-23",
+      "transaction_id": "act_cb_001_1",
+      "product_type": "ACQUIRING",
+      "transaction_type": "CHARGEBACK",
+      "transaction_status": "RECEIVED",
+      "transaction_amount": 100.0,
+      "transaction_currency": "EUR",
+      "transaction_date": "2026-03-23",
       "metadata": {
         "scheme_code": "VISA",
         "payment_method": "card",
@@ -29,7 +29,7 @@
         {
           "leg_id": "act_cb_001_1_L1",
           "leg_type": "SCHEME_SETTLEMENT",
-          "leg_amount": 100.00,
+          "leg_amount": 100.0,
           "leg_currency": "EUR",
           "leg_status": "ACTUAL",
           "value_date": "2026-03-24",
@@ -46,7 +46,7 @@
             {
               "fee_id": "act_cb_001_1_L1_F1",
               "fee_type": "CHARGEBACK_FEE",
-              "fee_amount": 15.00,
+              "fee_amount": 15.0,
               "fee_currency": "EUR",
               "fee_status": "ACTUAL"
             }
@@ -55,7 +55,7 @@
         {
           "leg_id": "act_cb_001_1_L2",
           "leg_type": "FUNDING",
-          "leg_amount": 100.00,
+          "leg_amount": 100.0,
           "leg_currency": "EUR",
           "leg_status": "ACTUAL",
           "value_date": "2026-03-25",

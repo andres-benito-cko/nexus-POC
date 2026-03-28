@@ -1,6 +1,6 @@
 package com.checkout.nexus.transformer.validation;
 
-import com.checkout.nexus.transformer.model.NexusTransaction;
+import com.checkout.nexus.transformer.model.NexusBlock;
 import com.checkout.nexus.transformer.model.le.LeLinkedTransaction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DlqHandler {
 
-    private static final String DLQ_TOPIC = "nexus.transactions.dlq";
+    private static final String DLQ_TOPIC = "nexus.blocks.dlq";
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -28,14 +28,14 @@ public class DlqHandler {
      * Sends an invalid Nexus transaction to the DLQ with context.
      *
      * @param original the original LE transaction that produced the failure
-     * @param failed   the partially-assembled NexusTransaction (may be null)
+     * @param failed   the partially-assembled NexusBlock (may be null)
      * @param errors   list of validation error messages
      */
-    public void sendToDlq(LeLinkedTransaction original, NexusTransaction failed, List<String> errors) {
+    public void sendToDlq(LeLinkedTransaction original, NexusBlock failed, List<String> errors) {
         Map<String, Object> envelope = new HashMap<>();
-        envelope.put("leTransactionId", original.getId());
+        envelope.put("leNexusId", original.getId());
         envelope.put("actionId", original.getActionId());
-        envelope.put("nexusTransaction", failed);
+        envelope.put("nexusBlock", failed);
         envelope.put("errors", errors);
         envelope.put("timestamp", Instant.now().toString());
 

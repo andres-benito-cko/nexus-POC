@@ -5,7 +5,7 @@ import com.checkout.nexus.transformer.engine.context.LeContext;
 import com.checkout.nexus.transformer.engine.expression.ExpressionEvaluator;
 import com.checkout.nexus.transformer.engine.pipeline.*;
 import com.checkout.nexus.transformer.engine.resolver.*;
-import com.checkout.nexus.transformer.model.NexusTransaction;
+import com.checkout.nexus.transformer.model.NexusBlock;
 import com.checkout.nexus.transformer.model.le.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -47,7 +47,7 @@ class NexusEngineTest {
         Classifier classifier = new Classifier(config, evaluator);
         StateMachineRunner smRunner = new StateMachineRunner(config, evaluator);
         LegAssembler legAssembler = new LegAssembler(config, evaluator);
-        TransactionAssembler assembler = new TransactionAssembler(config, evaluator, legAssembler);
+        BlockAssembler assembler = new BlockAssembler(config, evaluator, legAssembler);
         engine = new NexusEngine(classifier, smRunner, assembler);
     }
 
@@ -68,16 +68,16 @@ class NexusEngineTest {
         tx.setGatewayEvents(List.of(gw));
 
         LeContext ctx = new LeContext(tx);
-        NexusTransaction result = engine.transform(ctx);
+        NexusBlock result = engine.transform(ctx);
 
         assertThat(result).isNotNull();
-        assertThat(result.getTransactionId()).isEqualTo("action-001");
+        assertThat(result.getNexusId()).isEqualTo("action-001");
         assertThat(result.getStatus()).isEqualTo("NOT_LIVE");
-        assertThat(result.getTrades()).hasSize(1);
-        assertThat(result.getTrades().get(0).getTradeFamily()).isEqualTo("ACQUIRING");
-        assertThat(result.getTrades().get(0).getTradeType()).isEqualTo("CAPTURE");
-        assertThat(result.getTrades().get(0).getTradeStatus()).isEqualTo("CAPTURED");
-        assertThat(result.getTrades().get(0).getLegs()).isNotEmpty();
+        assertThat(result.getTransactions()).hasSize(1);
+        assertThat(result.getTransactions().get(0).getProductType()).isEqualTo("ACQUIRING");
+        assertThat(result.getTransactions().get(0).getTransactionType()).isEqualTo("CAPTURE");
+        assertThat(result.getTransactions().get(0).getTransactionStatus()).isEqualTo("CAPTURED");
+        assertThat(result.getTransactions().get(0).getLegs()).isNotEmpty();
     }
 
     @Test
@@ -115,12 +115,12 @@ class NexusEngineTest {
         tx.setSchemeSettlementEvents(List.of(sd));
 
         LeContext ctx = new LeContext(tx);
-        NexusTransaction result = engine.transform(ctx);
+        NexusBlock result = engine.transform(ctx);
 
         assertThat(result.getStatus()).isEqualTo("LIVE");
-        assertThat(result.getTrades().get(0).getTradeStatus()).isEqualTo("SETTLED");
+        assertThat(result.getTransactions().get(0).getTransactionStatus()).isEqualTo("SETTLED");
         // Should have SCHEME_SETTLEMENT leg
-        boolean hasSchemeSettlement = result.getTrades().get(0).getLegs().stream()
+        boolean hasSchemeSettlement = result.getTransactions().get(0).getLegs().stream()
                 .anyMatch(l -> "SCHEME_SETTLEMENT".equals(l.getLegType()));
         assertThat(hasSchemeSettlement).isTrue();
     }
@@ -148,12 +148,12 @@ class NexusEngineTest {
         tx.setCashEvents(List.of(cash));
 
         LeContext ctx = new LeContext(tx);
-        NexusTransaction result = engine.transform(ctx);
+        NexusBlock result = engine.transform(ctx);
 
         assertThat(result.getStatus()).isEqualTo("LIVE");
-        assertThat(result.getTrades().get(0).getTradeFamily()).isEqualTo("CASH");
-        assertThat(result.getTrades().get(0).getTradeType()).isEqualTo("SETTLEMENT");
-        assertThat(result.getTrades().get(0).getTradeStatus()).isEqualTo("SETTLED");
+        assertThat(result.getTransactions().get(0).getProductType()).isEqualTo("CASH");
+        assertThat(result.getTransactions().get(0).getTransactionType()).isEqualTo("SETTLEMENT");
+        assertThat(result.getTransactions().get(0).getTransactionStatus()).isEqualTo("SETTLED");
     }
 
     // ------------------------------------------------------------------ helpers

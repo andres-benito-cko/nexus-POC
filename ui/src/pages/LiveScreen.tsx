@@ -256,8 +256,8 @@ export default function LiveScreen() {
                 </svg>
                 <p className="text-sm">Select an event from the stream to inspect it</p>
               </div>
-            ) : selected.type === 'NEXUS_TRANSACTION' ? (
-              <NexusTransactionDetail payload={selectedPayload} />
+            ) : selected.type === 'NEXUS_BLOCK' ? (
+              <NexusBlockDetail payload={selectedPayload} />
             ) : selected.type === 'DLQ_EVENT' ? (
               <DlqEventDetail payload={selectedPayload} />
             ) : (
@@ -289,11 +289,11 @@ function EventCard({
   onClick: () => void
 }) {
   const payload = message.payload as Record<string, unknown> | undefined
-  const actionId = (payload?.action_id as string) ?? (payload?.transaction_id as string) ?? '--'
+  const actionId = (payload?.action_id as string) ?? (payload?.nexus_id as string) ?? '--'
   const status = (payload?.status as string) ?? ''
 
   const typeBadgeStyle =
-    message.type === 'NEXUS_TRANSACTION'
+    message.type === 'NEXUS_BLOCK'
       ? 'bg-blue-100 text-blue-700'
       : message.type === 'DLQ_EVENT'
         ? 'bg-red-100 text-red-700'
@@ -312,7 +312,7 @@ function EventCard({
         <span
           className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${typeBadgeStyle}`}
         >
-          {message.type === 'NEXUS_TRANSACTION'
+          {message.type === 'NEXUS_BLOCK'
             ? 'NEXUS'
             : message.type === 'DLQ_EVENT'
               ? 'DLQ'
@@ -328,7 +328,7 @@ function EventCard({
   )
 }
 
-function NexusTransactionDetail({
+function NexusBlockDetail({
   payload,
 }: {
   payload: Record<string, unknown> | undefined
@@ -339,7 +339,7 @@ function NexusTransactionDetail({
     <div className="space-y-4 fade-in">
       <div className="flex items-center gap-2 mb-2">
         <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 uppercase tracking-wider">
-          NEXUS_TRANSACTION
+          NEXUS_BLOCK
         </span>
       </div>
       <TransactionTrace data={payload as TransactionData} />

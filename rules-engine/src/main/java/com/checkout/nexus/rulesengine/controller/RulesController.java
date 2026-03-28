@@ -43,9 +43,9 @@ public class RulesController {
             .map(existing -> {
                 existing.setName(update.getName());
                 existing.setDescription(update.getDescription());
-                existing.setTradeFamily(update.getTradeFamily());
-                existing.setTradeType(update.getTradeType());
-                existing.setTradeStatus(update.getTradeStatus());
+                existing.setProductType(update.getProductType());
+                existing.setTransactionType(update.getTransactionType());
+                existing.setTransactionStatus(update.getTransactionStatus());
                 existing.setLegType(update.getLegType());
                 existing.setPartyType(update.getPartyType());
                 existing.setDebitAccount(update.getDebitAccount());

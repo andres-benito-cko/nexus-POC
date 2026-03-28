@@ -5,8 +5,8 @@
 | Topic | Producer | Consumer | Format | Key | Partitions |
 |---|---|---|---|---|---|
 | `le.linked.transactions` | LE Simulator | Nexus Transformer | JSON | action_id | 3 |
-| `nexus.transactions` | Nexus Transformer | Rules Engine, Event Gateway | JSON | action_id | 3 |
-| `nexus.ledger.entries` | Rules Engine | Event Gateway | JSON | transaction_id | 3 |
+| `nexus.blocks` | Nexus Transformer | Rules Engine, Event Gateway | JSON | action_id | 3 |
+| `nexus.ledger.entries` | Rules Engine | Event Gateway | JSON | nexus_id | 3 |
 
 **Config notes:**
 - Replication factor: 1 (local POC; increase for production)
@@ -14,7 +14,7 @@
 
 ## Database Schema
 
-All three tables live in the shared `nexus` PostgreSQL database. The rules engine owns `rules` and `ledger_entries`; nexus-api owns `nexus_transactions`.
+All three tables live in the shared `nexus` PostgreSQL database. The rules engine owns `rules` and `ledger_entries`; nexus-api owns `nexus_blocks`.
 
 ### rules table
 
@@ -33,8 +33,8 @@ All three tables live in the shared `nexus` PostgreSQL database. The rules engin
 | Column | Type | Constraints | Description |
 |---|---|---|---|
 | id | VARCHAR(64) | PRIMARY KEY | Entry identifier |
-| transaction_id | VARCHAR(64) | NOT NULL, INDEX | Nexus transaction ID |
-| trade_id | VARCHAR(64) | NOT NULL | Trade ID |
+| nexus_id | VARCHAR(64) | NOT NULL, INDEX | Nexus transaction ID |
+| nexus_id | VARCHAR(64) | NOT NULL | Trade ID |
 | leg_id | VARCHAR(64) | NOT NULL | Leg ID |
 | rule_id | VARCHAR(64) | NOT NULL, FK -> rules.id | Rule that generated this |
 | debit_account | VARCHAR(128) | NOT NULL | Account debited |
@@ -43,13 +43,13 @@ All three tables live in the shared `nexus` PostgreSQL database. The rules engin
 | currency | CHAR(3) | NOT NULL | ISO 4217 |
 | created_at | TIMESTAMP | NOT NULL DEFAULT NOW() | Creation time |
 
-### nexus_transactions table
+### nexus_blocks table
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| transaction_id | VARCHAR(64) | PRIMARY KEY | Nexus transaction ID |
+| nexus_id | VARCHAR(64) | PRIMARY KEY | Nexus transaction ID |
 | action_id | VARCHAR(64) | NOT NULL, INDEX | LE action_id |
-| parent_transaction_id | VARCHAR(64) | INDEX | Payment lifecycle grouper |
+| parent_nexus_id | VARCHAR(64) | INDEX | Payment lifecycle grouper |
 | status | VARCHAR(16) | NOT NULL | NOT_LIVE / LIVE / DEAD |
 | version | INTEGER | NOT NULL | Incremented on update |
 | data | JSONB | NOT NULL | Full Nexus transaction JSON |
@@ -57,8 +57,8 @@ All three tables live in the shared `nexus` PostgreSQL database. The rules engin
 | updated_at | TIMESTAMP | NOT NULL DEFAULT NOW() | Last update |
 
 **Indexes:**
-- `nexus_transactions`: `(parent_transaction_id)`, `(status)`, `(updated_at DESC)`
-- `ledger_entries`: `(transaction_id)`, `(rule_id)`, `(created_at DESC)`
+- `nexus_blocks`: `(parent_nexus_id)`, `(status)`, `(updated_at DESC)`
+- `ledger_entries`: `(nexus_id)`, `(rule_id)`, `(created_at DESC)`
 
 ## Worked Example: Simple VISA Capture (Scenario 1)
 
@@ -69,7 +69,7 @@ This walkthrough traces a single capture event through all 9 pipeline steps.
 - Only the Gateway (GW) pillar is present; COS, FIAPI, SD, Cash are absent
 
 **2. Transformer produces NOT_LIVE Nexus event**
-- Transaction written to `nexus_transactions` with `status = NOT_LIVE`
+- Transaction written to `nexus_blocks` with `status = NOT_LIVE`
 - No Trades or Legs emitted — insufficient data to assemble a complete transaction
 
 **3. Rules Engine evaluates — no match**
@@ -83,7 +83,7 @@ This walkthrough traces a single capture event through all 9 pipeline steps.
 **5. Transformer produces LIVE event**
 - `status` updated to `LIVE`
 - 2 Legs assembled: `SCHEME_SETTLEMENT (PREDICTED)` and `FUNDING (PREDICTED)`
-- Updated Nexus transaction published to `nexus.transactions`
+- Updated Nexus transaction published to `nexus.blocks`
 
 **6. Rules Engine fires**
 - Rule matches on `LIVE` status with `SCHEME_SETTLEMENT` leg

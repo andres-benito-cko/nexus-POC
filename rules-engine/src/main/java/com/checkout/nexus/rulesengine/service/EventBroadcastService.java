@@ -1,7 +1,7 @@
 package com.checkout.nexus.rulesengine.service;
 
 import com.checkout.nexus.rulesengine.model.LedgerEntryMessage;
-import com.checkout.nexus.rulesengine.model.NexusTransaction;
+import com.checkout.nexus.rulesengine.model.NexusBlock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -24,9 +24,9 @@ public class EventBroadcastService {
         messagingTemplate.convertAndSend("/topic/le-events", leEvent);
     }
 
-    @KafkaListener(topics = "nexus.transactions", groupId = "rules-engine-ws-nexus",
+    @KafkaListener(topics = "nexus.blocks", groupId = "rules-engine-ws-nexus",
             containerFactory = "nexusContainerFactory")
-    public void onNexusEvent(NexusTransaction nexusEvent) {
+    public void onNexusEvent(NexusBlock nexusEvent) {
         log.debug("Broadcasting Nexus event to WebSocket");
         messagingTemplate.convertAndSend("/topic/nexus-events", nexusEvent);
     }

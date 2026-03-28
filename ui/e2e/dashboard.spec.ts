@@ -39,8 +39,8 @@ test.describe('Dashboard', () => {
   test('recent transactions table shows column headers and data', async ({ page }) => {
     await expect(page.getByText('Recent Transactions')).toBeVisible()
     await expect(page.getByText('Transaction ID')).toBeVisible()
-    await expect(page.getByText('Trade Family')).toBeVisible()
-    await expect(page.getByText('Trade Type')).toBeVisible()
+    await expect(page.getByText('Product Type')).toBeVisible()
+    await expect(page.getByText('Transaction Type')).toBeVisible()
     const rows = page.locator('table').last().locator('tbody tr')
     const count = await rows.count()
     expect(count).toBeGreaterThan(0)

@@ -14,12 +14,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "nexus_transactions")
-public class NexusTransactionRecord {
+@Table(name = "nexus_blocks")
+public class NexusBlockRecord {
 
     @Id
-    @Column(name = "transaction_id")
-    private String transactionId;
+    @Column(name = "nexus_id")
+    private String nexusId;
 
     @Column(name = "action_id", nullable = false)
     private String actionId;
@@ -36,20 +36,20 @@ public class NexusTransactionRecord {
     @Column(name = "cko_entity_id")
     private String ckoEntityId;
 
-    @Column(name = "trade_family")
-    private String tradeFamily;
+    @Column(name = "product_type")
+    private String productType;
 
-    @Column(name = "trade_type")
-    private String tradeType;
+    @Column(name = "transaction_type")
+    private String transactionType;
 
-    @Column(name = "trade_status")
-    private String tradeStatus;
+    @Column(name = "transaction_status")
+    private String transactionStatus;
 
-    @Column(name = "trade_amount", precision = 20, scale = 6)
-    private BigDecimal tradeAmount;
+    @Column(name = "transaction_amount", precision = 20, scale = 6)
+    private BigDecimal transactionAmount;
 
-    @Column(name = "trade_currency", length = 3)
-    private String tradeCurrency;
+    @Column(name = "transaction_currency", length = 3)
+    private String transactionCurrency;
 
     @Column(name = "raw_json", nullable = false, columnDefinition = "TEXT")
     private String rawJson;

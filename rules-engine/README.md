@@ -5,7 +5,7 @@ Consumes Nexus transaction events, evaluates configurable rules, and produces do
 ## How It Works
 
 1. Receives every Nexus transaction event from Kafka
-2. Matches each event against rule conditions (trade_family, trade_type, trade_status, leg_type, party_type)
+2. Matches each event against rule conditions (product_type, transaction_type, transaction_status, leg_type, party_type)
 3. For each matched rule, generates debit/credit ledger entries
 4. Persists entries to PostgreSQL and publishes to Kafka
 5. Fans out all events (LE + Nexus + Ledger) to WebSocket clients
@@ -26,7 +26,7 @@ Consumes Nexus transaction events, evaluates configurable rules, and produces do
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/ledger/entries?transactionId={id}&limit=N` | Query ledger entries |
+| `GET` | `/ledger/entries?nexusId={id}&limit=N` | Query ledger entries |
 | `GET` | `/ledger/entries/summary` | Ledger summary |
 
 ### Transactions
@@ -34,17 +34,17 @@ Consumes Nexus transaction events, evaluates configurable rules, and produces do
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/transactions?limit=N` | List Nexus transactions |
-| `GET` | `/transactions/{id}` | Get transaction |
-| `GET` | `/transactions/{id}/ledger` | Ledger entries for a transaction |
+| `GET` | `/blocks/{id}` | Get transaction |
+| `GET` | `/blocks/{id}/ledger` | Ledger entries for a transaction |
 
 ## Kafka
 
-- **Consumes from:** `nexus.transactions`
+- **Consumes from:** `nexus.blocks`
 - **Produces to:** `nexus.ledger.entries`
 
 ## Database
 
-PostgreSQL with Flyway migrations. Tables: `rules`, `ledger_entries`, `nexus_transactions`.
+PostgreSQL with Flyway migrations. Tables: `rules`, `ledger_entries`, `nexus_blocks`.
 
 Seed rules in `src/main/resources/db/migration/V3__seed_rules.sql`.
 

@@ -19,9 +19,9 @@ class NexusValidatorTest {
     }
 
     @Test
-    @DisplayName("Valid NexusTransaction passes validation")
+    @DisplayName("Valid NexusBlock passes validation")
     void validTransaction_passes() {
-        NexusTransaction tx = buildValidTransaction();
+        NexusBlock tx = buildValidTransaction();
         NexusValidator.ValidationResult result = validator.validate(tx);
         assertThat(result.getErrors()).as("Validation errors: " + result.getErrors()).isEmpty();
         assertThat(result.isValid()).isTrue();
@@ -31,7 +31,7 @@ class NexusValidatorTest {
     @DisplayName("Transaction missing required fields fails validation with errors listed")
     void missingRequiredFields_failsWithErrors() {
         // Completely empty transaction
-        NexusTransaction tx = NexusTransaction.builder().build();
+        NexusBlock tx = NexusBlock.builder().build();
         NexusValidator.ValidationResult result = validator.validate(tx);
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).isNotEmpty();
@@ -40,7 +40,7 @@ class NexusValidatorTest {
     @Test
     @DisplayName("Transaction with invalid status fails validation")
     void invalidStatus_failsValidation() {
-        NexusTransaction tx = buildValidTransaction();
+        NexusBlock tx = buildValidTransaction();
         // Status must be one of NOT_LIVE/LIVE/DEAD per schema
         tx.setStatus("INVALID_STATUS");
         NexusValidator.ValidationResult result = validator.validate(tx);
@@ -51,15 +51,15 @@ class NexusValidatorTest {
     @Test
     @DisplayName("Transaction missing trades fails validation")
     void missingTrades_failsValidation() {
-        NexusTransaction tx = buildValidTransaction();
-        tx.setTrades(null);
+        NexusBlock tx = buildValidTransaction();
+        tx.setTransactions(null);
         NexusValidator.ValidationResult result = validator.validate(tx);
         assertThat(result.isValid()).isFalse();
     }
 
     // ------------------------------------------------------------------ helper
 
-    private NexusTransaction buildValidTransaction() {
+    private NexusBlock buildValidTransaction() {
         Leg leg = Leg.builder()
                 .legId("action-001_1_L1")
                 .legType("FUNDING")
@@ -72,28 +72,28 @@ class NexusValidatorTest {
                 .fees(List.of())
                 .build();
 
-        Trade trade = Trade.builder()
-                .tradeId("action-001_1")
-                .tradeFamily("ACQUIRING")
-                .tradeType("CAPTURE")
-                .tradeStatus("CAPTURED")
-                .tradeAmount(100.0)
-                .tradeCurrency("EUR")
-                .tradeDate("2026-01-14")
-                .metadata(TradeMetadata.builder().build())
+        Transaction transaction = Transaction.builder()
+                .transactionId("action-001_1")
+                .productType("ACQUIRING")
+                .transactionType("CAPTURE")
+                .transactionStatus("CAPTURED")
+                .transactionAmount(100.0)
+                .transactionCurrency("EUR")
+                .transactionDate("2026-01-14")
+                .metadata(TransactionMetadata.builder().build())
                 .legs(List.of(leg))
                 .build();
 
-        return NexusTransaction.builder()
-                .transactionId("action-001")
-                .parentTransactionId("root-001")
+        return NexusBlock.builder()
+                .nexusId("action-001")
+                .parentNexusId("root-001")
                 .actionId("action-001")
                 .actionRootId("root-001")
                 .status("NOT_LIVE")
                 .entity(Entity.builder().id("client-001").build())
                 .ckoEntityId("CKO_UK")
                 .processedAt("2026-01-14T10:00:00Z")
-                .trades(List.of(trade))
+                .transactions(List.of(trade))
                 .build();
     }
 }

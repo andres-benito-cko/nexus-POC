@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StateConfig {
 
+    @JsonProperty("block_status")
+    private String blockStatus;
+
     @JsonProperty("transaction_status")
     private String transactionStatus;
-
-    @JsonProperty("trade_status")
-    private String tradeStatus;
 }

@@ -13,7 +13,7 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TypeClassificationConfig {
 
-    /** Ordered list of pillar names to check when determining trade type. */
+    /** Ordered list of pillar names to check when determining transaction type. */
     @JsonProperty("priority")
     private List<String> priority;
 

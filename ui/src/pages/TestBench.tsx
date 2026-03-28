@@ -177,7 +177,7 @@ export default function TestBench() {
               <div className="glow-border rounded-xl overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-2 bg-navy-700 border-b border-zinc-100">
                   <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                    Nexus Transaction Output
+                    Nexus Block Output
                   </h3>
                   <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                     SUCCESS

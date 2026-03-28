@@ -20,22 +20,22 @@ interface Fee {
   [key: string]: unknown
 }
 
-interface Trade {
-  trade_id?: string
-  trade_family?: string
-  trade_type?: string
-  trade_status?: string
+interface Transaction {
+  transaction_id?: string
+  product_type?: string
+  transaction_type?: string
+  transaction_status?: string
   legs?: Leg[]
   [key: string]: unknown
 }
 
 export interface TransactionData {
-  transaction_id?: string
+  nexus_id?: string
   status?: string
   processed_at?: string
   entity?: { id?: string }
   cko_entity_id?: string
-  trades?: Trade[]
+  transactions?: Transaction[]
   [key: string]: unknown
 }
 
@@ -133,7 +133,7 @@ function LegCard({ leg, index }: { leg: Leg; index: number }) {
 }
 
 export default function TransactionTrace({ data }: { data: TransactionData }) {
-  const trades = data.trades ?? []
+  const transactions = data.transactions ?? []
 
   return (
     <div className="space-y-4">
@@ -145,10 +145,10 @@ export default function TransactionTrace({ data }: { data: TransactionData }) {
         </div>
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-          {data.transaction_id && (
+          {data.nexus_id && (
             <div>
               <span className="text-zinc-400">ID: </span>
-              <span className="font-mono text-zinc-700">{data.transaction_id}</span>
+              <span className="font-mono text-zinc-700">{data.nexus_id}</span>
             </div>
           )}
           {data.processed_at && (
@@ -175,30 +175,30 @@ export default function TransactionTrace({ data }: { data: TransactionData }) {
       </div>
 
       {/* Trades */}
-      {trades.length > 0 && (
+      {transactions.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-            Trades ({trades.length})
+            Trades ({transactions.length})
           </h4>
-          {trades.map((trade, ti) => (
+          {transactions.map((txn, ti) => (
             <CollapsibleSection
-              key={trade.trade_id ?? ti}
-              title={`${trade.trade_family ?? 'UNKNOWN'} / ${trade.trade_type ?? 'UNKNOWN'}`}
-              badge={trade.trade_status}
+              key={txn.transaction_id ?? ti}
+              title={`${txn.product_type ?? 'UNKNOWN'} / ${trade.transaction_type ?? 'UNKNOWN'}`}
+              badge={txn.transaction_status}
               defaultOpen={ti === 0}
             >
               <div className="text-xs space-y-1 mb-2">
-                {trade.trade_id && (
+                {txn.transaction_id && (
                   <div>
                     <span className="text-zinc-400">Trade ID: </span>
-                    <span className="font-mono text-zinc-700">{trade.trade_id}</span>
+                    <span className="font-mono text-zinc-700">{txn.transaction_id}</span>
                   </div>
                 )}
               </div>
 
-              {trade.legs && trade.legs.length > 0 ? (
+              {txn.legs && trade.legs.length > 0 ? (
                 <div className="space-y-2">
-                  {trade.legs.map((leg, li) => (
+                  {txn.legs.map((leg, li) => (
                     <LegCard key={li} leg={leg} index={li} />
                   ))}
                 </div>
@@ -210,8 +210,8 @@ export default function TransactionTrace({ data }: { data: TransactionData }) {
         </div>
       )}
 
-      {trades.length === 0 && (
-        <p className="text-xs text-zinc-400 italic">No trade data available</p>
+      {transactions.length === 0 && (
+        <p className="text-xs text-zinc-400 italic">No transaction data available</p>
       )}
     </div>
   )
