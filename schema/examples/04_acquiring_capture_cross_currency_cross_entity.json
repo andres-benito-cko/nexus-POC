@@ -1,0 +1,142 @@
+{
+  "transaction_id": "act_cap_004",
+  "parent_transaction_id": "pay_004",
+  "action_id": "act_cap_004",
+  "action_root_id": "pay_004",
+  "status": "LIVE",
+  "entity": {
+    "id": "cli_global_corp"
+  },
+  "cko_entity_id": "CKO_UK_LTD",
+  "processed_at": "2026-03-17T16:45:00Z",
+  "trades": [
+    {
+      "trade_id": "act_cap_004_1",
+      "trade_family": "ACQUIRING",
+      "trade_type": "CAPTURE",
+      "trade_status": "SETTLED",
+      "trade_amount": 100.00,
+      "trade_currency": "USD",
+      "trade_date": "2026-03-17",
+      "metadata": {
+        "scheme_code": "VISA",
+        "payment_method": "card",
+        "acquirer_name": "CKO_FR_SAS",
+        "acquirer_country": "FR",
+        "source_event_type": "payment_captured",
+        "client_settlement_type": "Net",
+        "settlement_service_name": "ISS",
+        "settlement_country_code": "FR",
+        "central_processing_date": "2026-03-18"
+      },
+      "legs": [
+        {
+          "leg_id": "act_cap_004_1_L1",
+          "leg_type": "SCHEME_SETTLEMENT",
+          "leg_amount": 92.00,
+          "leg_currency": "EUR",
+          "leg_status": "ACTUAL",
+          "value_date": "2026-03-18",
+          "from_party": {
+            "party_type": "SCHEME",
+            "party_id": "VISA"
+          },
+          "to_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_FR_SAS",
+            "currency_account_id": "ca_cko_fr_eur_001"
+          },
+          "fees": [
+            {
+              "fee_id": "act_cap_004_1_L1_F1",
+              "fee_type": "INTERCHANGE",
+              "fee_amount": 0.55,
+              "fee_currency": "EUR",
+              "fee_status": "ACTUAL"
+            },
+            {
+              "fee_id": "act_cap_004_1_L1_F2",
+              "fee_type": "SCHEME_FEE",
+              "fee_amount": 0.12,
+              "fee_currency": "EUR",
+              "fee_status": "ACTUAL"
+            }
+          ]
+        },
+        {
+          "leg_id": "act_cap_004_1_L2",
+          "leg_type": "FUNDING",
+          "leg_amount": 91.07,
+          "leg_currency": "EUR",
+          "leg_status": "ACTUAL",
+          "value_date": "2026-03-19",
+          "from_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_UK_LTD",
+            "currency_account_id": "ca_cko_uk_eur_001"
+          },
+          "to_party": {
+            "party_type": "CLIENT_ENTITY",
+            "party_id": "cli_global_corp",
+            "currency_account_id": "ca_global_eur_001"
+          },
+          "fees": [
+            {
+              "fee_id": "act_cap_004_1_L2_F1",
+              "fee_type": "PROCESSING_FEE",
+              "fee_amount": 0.20,
+              "fee_currency": "EUR",
+              "fee_status": "ACTUAL"
+            },
+            {
+              "fee_id": "act_cap_004_1_L2_F2",
+              "fee_type": "ACQUIRER_FEE",
+              "fee_amount": 0.13,
+              "fee_currency": "EUR",
+              "fee_status": "ACTUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "trade_id": "act_cap_004_2",
+      "trade_family": "TRANSFER",
+      "trade_type": "DEBIT",
+      "trade_status": "SETTLED",
+      "trade_amount": 91.33,
+      "trade_currency": "EUR",
+      "trade_date": "2026-03-17",
+      "metadata": {},
+      "legs": [
+        {
+          "leg_id": "act_cap_004_2_L1",
+          "leg_type": "ENTITY_TRANSFER",
+          "leg_amount": 91.33,
+          "leg_currency": "EUR",
+          "leg_status": "ACTUAL",
+          "value_date": "2026-03-17",
+          "from_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_FR_SAS",
+            "currency_account_id": "ca_cko_fr_eur_001"
+          },
+          "to_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_UK_LTD",
+            "currency_account_id": "ca_cko_uk_eur_001"
+          },
+          "fees": [
+            {
+              "fee_id": "act_cap_004_2_L1_F1",
+              "fee_type": "TRANSFER_FEE",
+              "fee_amount": 0.05,
+              "fee_currency": "EUR",
+              "fee_status": "ACTUAL"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

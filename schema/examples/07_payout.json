@@ -1,0 +1,56 @@
+{
+  "transaction_id": "act_pout_001",
+  "parent_transaction_id": "pay_pout_001",
+  "action_id": "act_pout_001",
+  "action_root_id": "pay_pout_001",
+  "status": "LIVE",
+  "entity": {
+    "id": "cli_acme_corp"
+  },
+  "cko_entity_id": "CKO_UK_LTD",
+  "processed_at": "2026-03-21T17:00:00Z",
+  "trades": [
+    {
+      "trade_id": "act_pout_001_1",
+      "trade_family": "PAYOUT",
+      "trade_type": "CREDIT",
+      "trade_status": "SETTLED",
+      "trade_amount": 500.00,
+      "trade_currency": "GBP",
+      "trade_date": "2026-03-21",
+      "metadata": {
+        "payout_id": "pout_001",
+        "billing_descriptor": "ACME PAYOUT"
+      },
+      "legs": [
+        {
+          "leg_id": "act_pout_001_1_L1",
+          "leg_type": "FUNDING",
+          "leg_amount": 500.00,
+          "leg_currency": "GBP",
+          "leg_status": "ACTUAL",
+          "value_date": "2026-03-23",
+          "from_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_UK_LTD",
+            "currency_account_id": "ca_cko_uk_gbp_001"
+          },
+          "to_party": {
+            "party_type": "CLIENT_ENTITY",
+            "party_id": "cli_acme_corp",
+            "currency_account_id": "ca_acme_gbp_001"
+          },
+          "fees": [
+            {
+              "fee_id": "act_pout_001_1_L1_F1",
+              "fee_type": "PROCESSING_FEE",
+              "fee_amount": 0.25,
+              "fee_currency": "GBP",
+              "fee_status": "ACTUAL"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

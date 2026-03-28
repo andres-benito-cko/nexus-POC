@@ -1,0 +1,81 @@
+{
+  "transaction_id": "act_ref_001",
+  "parent_transaction_id": "pay_001",
+  "action_id": "act_ref_001",
+  "action_root_id": "pay_001",
+  "status": "LIVE",
+  "entity": {
+    "id": "cli_acme_corp"
+  },
+  "cko_entity_id": "CKO_UK_LTD",
+  "processed_at": "2026-03-22T11:00:00Z",
+  "trades": [
+    {
+      "trade_id": "act_ref_001_1",
+      "trade_family": "ACQUIRING",
+      "trade_type": "REFUND",
+      "trade_status": "SETTLED",
+      "trade_amount": 50.00,
+      "trade_currency": "EUR",
+      "trade_date": "2026-03-22",
+      "metadata": {
+        "scheme_code": "VISA",
+        "payment_method": "card",
+        "acquirer_name": "CKO_UK_LTD",
+        "acquirer_country": "GB",
+        "enhanced_action_type": "PartialRefund",
+        "source_event_type": "payment_refunded",
+        "settlement_service_name": "ISS",
+        "settlement_country_code": "GB",
+        "central_processing_date": "2026-03-23"
+      },
+      "legs": [
+        {
+          "leg_id": "act_ref_001_1_L1",
+          "leg_type": "SCHEME_SETTLEMENT",
+          "leg_amount": 50.00,
+          "leg_currency": "EUR",
+          "leg_status": "ACTUAL",
+          "value_date": "2026-03-23",
+          "from_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_UK_LTD",
+            "currency_account_id": "ca_cko_uk_eur_001"
+          },
+          "to_party": {
+            "party_type": "SCHEME",
+            "party_id": "VISA"
+          },
+          "fees": []
+        },
+        {
+          "leg_id": "act_ref_001_1_L2",
+          "leg_type": "FUNDING",
+          "leg_amount": 50.00,
+          "leg_currency": "EUR",
+          "leg_status": "ACTUAL",
+          "value_date": "2026-03-24",
+          "from_party": {
+            "party_type": "CLIENT_ENTITY",
+            "party_id": "cli_acme_corp",
+            "currency_account_id": "ca_acme_eur_001"
+          },
+          "to_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_UK_LTD",
+            "currency_account_id": "ca_cko_uk_eur_001"
+          },
+          "fees": [
+            {
+              "fee_id": "act_ref_001_1_L2_F1",
+              "fee_type": "PROCESSING_FEE",
+              "fee_amount": 0.10,
+              "fee_currency": "EUR",
+              "fee_status": "ACTUAL"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

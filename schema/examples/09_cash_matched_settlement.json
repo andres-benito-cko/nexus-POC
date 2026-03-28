@@ -1,0 +1,48 @@
+{
+  "_comment": "This is the standalone bank-level cash transaction for cash_batch_id batch_visa_eur_001. In parallel, all ACQUIRING CAPTURE transactions with this cash_batch_id had their trade_status updated to SETTLED by the Cash Matching event.",
+  "transaction_id": "act_cash_001",
+  "parent_transaction_id": "act_cash_001",
+  "action_id": "act_cash_001",
+  "action_root_id": "act_cash_001",
+  "status": "LIVE",
+  "entity": {
+    "id": "cli_acme_corp"
+  },
+  "cko_entity_id": "CKO_UK_LTD",
+  "processed_at": "2026-03-22T06:00:00Z",
+  "trades": [
+    {
+      "trade_id": "act_cash_001_1",
+      "trade_family": "CASH",
+      "trade_type": "SETTLEMENT",
+      "trade_status": "SETTLED",
+      "trade_amount": 9850.00,
+      "trade_currency": "EUR",
+      "trade_date": "2026-03-22",
+      "metadata": {
+        "scheme_code": "VISA",
+        "cash_batch_id": "batch_visa_eur_001"
+      },
+      "legs": [
+        {
+          "leg_id": "act_cash_001_1_L1",
+          "leg_type": "FUNDING",
+          "leg_amount": 9850.00,
+          "leg_currency": "EUR",
+          "leg_status": "ACTUAL",
+          "value_date": "2026-03-22",
+          "from_party": {
+            "party_type": "SCHEME",
+            "party_id": "VISA"
+          },
+          "to_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_UK_LTD",
+            "currency_account_id": "ca_cko_uk_eur_001"
+          },
+          "fees": []
+        }
+      ]
+    }
+  ]
+}
