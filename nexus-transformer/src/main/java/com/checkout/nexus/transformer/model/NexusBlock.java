@@ -49,5 +49,5 @@ public class NexusBlock {
     private String periodEnd;
 
     @JsonProperty("transactions")
-    private List<Transaction> trades;
+    private List<Transaction> transactions;
 }

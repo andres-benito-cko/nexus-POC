@@ -47,10 +47,10 @@ public class LegAssembler {
     public List<Leg> assembleLegs(LeContext ctx, String productType, String transactionType,
                                    String entityId, String ckoEntityId, String acquirerEntity, String scheme) {
         Map<String, Map<String, TransactionConfig>> transactions = config.getTransactions();
-        if (trades == null) {
+        if (transactions == null) {
             return Collections.emptyList();
         }
-        Map<String, TransactionConfig> familyTrades = trades.get(productType);
+        Map<String, TransactionConfig> familyTrades = transactions.get(productType);
         if (familyTrades == null) {
             return Collections.emptyList();
         }

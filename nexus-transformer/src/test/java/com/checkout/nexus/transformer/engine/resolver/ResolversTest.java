@@ -106,8 +106,8 @@ class ResolversTest {
     }
 
     @Test
-    @DisplayName("SettlementAmountResolver falls back to COS fee amount when no SD")
-    void settlementAmount_fromCos() {
+    @DisplayName("SettlementAmountResolver returns null when only COS present (COS is not a valid settlement source)")
+    void settlementAmount_returnsNullWhenOnlyCosPresent() {
         CosEvent cos = buildCosEvent(75.00, "EUR", "FEE_TYPE_INTERCHANGE");
 
         LeLinkedTransaction tx = new LeLinkedTransaction();
@@ -117,8 +117,7 @@ class ResolversTest {
         SettlementAmountResolver resolver = new SettlementAmountResolver();
         Object result = resolver.resolve(ctx, Map.of("source_priority", List.of("SD", "COS")));
 
-        assertThat(result).isInstanceOf(AmountValue.class);
-        assertThat(((AmountValue) result).getValue()).isEqualTo(75.00);
+        assertThat(result).isNull();
     }
 
     @Test

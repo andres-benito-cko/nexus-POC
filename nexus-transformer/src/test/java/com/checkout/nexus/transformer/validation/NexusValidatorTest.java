@@ -93,7 +93,7 @@ class NexusValidatorTest {
                 .entity(Entity.builder().id("client-001").build())
                 .ckoEntityId("CKO_UK")
                 .processedAt("2026-01-14T10:00:00Z")
-                .transactions(List.of(trade))
+                .transactions(List.of(transaction))
                 .build();
     }
 }
