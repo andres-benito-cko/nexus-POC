@@ -2,6 +2,8 @@ package com.checkout.nexus.rulesengine.repository;
 
 import com.checkout.nexus.rulesengine.model.entity.Rule;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,5 +14,7 @@ public interface RuleRepository extends JpaRepository<Rule, UUID> {
 
     List<Rule> findByEnabledTrue();
 
-    boolean existsByDebitAccountOrCreditAccount(String debitAccount, String creditAccount);
+    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN TRUE ELSE FALSE END FROM Rule r " +
+           "WHERE (r.debitAccount = :account OR r.creditAccount = :account) AND r.enabled = TRUE")
+    boolean existsEnabledByAccount(@Param("account") String account);
 }

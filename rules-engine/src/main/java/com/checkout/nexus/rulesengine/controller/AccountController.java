@@ -50,7 +50,7 @@ public class AccountController {
 
     @DeleteMapping("/{code}")
     public ResponseEntity<?> deleteAccount(@PathVariable String code) {
-        if (ruleRepository.existsByDebitAccountOrCreditAccount(code, code)) {
+        if (ruleRepository.existsEnabledByAccount(code)) {
             return ResponseEntity.badRequest()
                 .body(Map.of("error", "Account '" + code + "' is referenced by existing rules"));
         }
