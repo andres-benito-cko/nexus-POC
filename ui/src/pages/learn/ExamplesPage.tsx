@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { LEARN_EXAMPLES, LearnExample } from '../../data/learnExamples'
 import { runTestBench } from '../../api/client'
 import TransactionTrace, { TransactionData } from '../../components/TransactionTrace'
@@ -63,8 +63,10 @@ export default function ExamplesPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<TransactionData | null>(null)
+  const reqId = useRef(0)
 
   function selectScenario(example: LearnExample) {
+    const id = ++reqId.current
     setSelected(example)
     setResult(null)
     setError(null)
@@ -72,27 +74,33 @@ export default function ExamplesPage() {
 
     runTestBench(example.lePayload)
       .then((res) => {
-        if (res.transaction) {
-          setResult(res.transaction as TransactionData)
-        } else if (res.errors && res.errors.length > 0) {
-          setError(res.errors.join('\n'))
-        } else {
-          setError('No transaction returned')
-        }
+        if (id !== reqId.current) return
+        setResult(res.transaction as TransactionData)
       })
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : String(err))
+        if (id !== reqId.current) return
+        setError(err instanceof Error ? err.message : 'Unexpected error')
       })
       .finally(() => {
+        if (id !== reqId.current) return
         setLoading(false)
       })
   }
 
   useEffect(() => {
     if (LEARN_EXAMPLES.length > 0) {
-      selectScenario(LEARN_EXAMPLES[0])
+      const first = LEARN_EXAMPLES[0]
+      const id = ++reqId.current
+      setSelected(first)
+      setResult(null)
+      setError(null)
+      setLoading(true)
+      runTestBench(first.lePayload)
+        .then((res) => { if (id === reqId.current) setResult(res.transaction as TransactionData) })
+        .catch((err: unknown) => { if (id === reqId.current) setError(err instanceof Error ? err.message : 'Unexpected error') })
+        .finally(() => { if (id === reqId.current) setLoading(false) })
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="flex gap-4 h-full min-h-0">
