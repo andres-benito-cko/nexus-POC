@@ -26,3 +26,6 @@ postgres_data/
 
 # Brainstorming sessions
 .superpowers/
+
+# Git worktrees
+.worktrees/
