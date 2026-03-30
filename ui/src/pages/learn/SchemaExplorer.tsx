@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import schemaRaw from '../../../../schema/nexus.schema.json'
+import { ProductMatrixGrid } from './ProductMatrix'
 
 interface PropertyDef {
   type?: string
@@ -146,6 +147,7 @@ const CALLOUT_CARDS = [
 
 function OverviewPanel() {
   return (
+    <div className="space-y-10">
     <div className="flex gap-8 items-start">
       {/* Left: nested boxes diagram — 2/3 width */}
       <div className="flex-[2] min-w-0 pt-4">
@@ -209,6 +211,8 @@ function OverviewPanel() {
           </div>
         ))}
       </div>
+    </div>
+    <ProductMatrixGrid />
     </div>
   )
 }

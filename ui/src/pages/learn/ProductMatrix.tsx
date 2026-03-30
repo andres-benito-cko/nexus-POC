@@ -62,12 +62,12 @@ const DEFAULT_STYLE = { header: 'bg-zinc-50 border-zinc-200', badge: 'bg-zinc-10
 
 const families = [...new Set(rules.map((r) => r.family))]
 
-export default function ProductMatrix() {
+export function ProductMatrixGrid() {
   return (
-    <div className="space-y-6 py-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900">Product Matrix</h2>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h3 className="text-base font-semibold text-zinc-900">Product Matrix</h3>
+        <p className="text-sm text-zinc-500 mt-0.5">
           Valid transaction types, statuses, and available metadata fields per product family.
         </p>
       </div>
@@ -146,6 +146,14 @@ export default function ProductMatrix() {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+export default function ProductMatrix() {
+  return (
+    <div className="py-6">
+      <ProductMatrixGrid />
     </div>
   )
 }
