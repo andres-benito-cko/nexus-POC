@@ -147,8 +147,8 @@ const CALLOUT_CARDS = [
 function OverviewPanel() {
   return (
     <div className="flex gap-8 items-start">
-      {/* Left: nested boxes diagram */}
-      <div className="flex-1 min-w-0">
+      {/* Left: nested boxes diagram — 2/3 width */}
+      <div className="flex-[2] min-w-0 pt-4">
         <NestedBox
           label="BLOCK"
           fields="nexus_id · action_id · status · entity · cko_entity_id"
@@ -162,7 +162,8 @@ function OverviewPanel() {
             labelClass="text-indigo-700"
           >
             <div className="flex gap-3">
-              <div className="flex-1">
+              {/* Leg: 2/3 */}
+              <div className="flex-[2] min-w-0">
                 <NestedBox
                   label="LEG [ ]"
                   fields="leg_type · leg_amount · leg_currency · leg_status"
@@ -170,18 +171,19 @@ function OverviewPanel() {
                   labelClass="text-emerald-700"
                 >
                   <div className="flex gap-2 mt-1">
-                    <div className="border-2 border-amber-300 rounded-lg px-3 py-2 text-center">
+                    <div className="flex-1 border-2 border-amber-300 rounded-lg px-3 py-2 text-center">
                       <p className="text-[10px] font-bold text-amber-700">PARTY ×2</p>
                       <p className="text-[9px] text-zinc-400 font-mono">from · to</p>
                     </div>
-                    <div className="border-2 border-rose-300 rounded-lg px-3 py-2 text-center">
+                    <div className="flex-1 border-2 border-rose-300 rounded-lg px-3 py-2 text-center">
                       <p className="text-[10px] font-bold text-rose-700">FEE [ ]</p>
                       <p className="text-[9px] text-zinc-400 font-mono">type · amount</p>
                     </div>
                   </div>
                 </NestedBox>
               </div>
-              <div className="border border-zinc-200 rounded-lg px-3 py-2 bg-white min-w-[110px]">
+              {/* Metadata: 1/3 */}
+              <div className="flex-[1] border border-zinc-200 rounded-lg px-3 py-2 bg-white">
                 <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider mb-1">Metadata</p>
                 <p className="text-[9px] text-zinc-300 font-mono leading-relaxed">
                   scheme_code<br />
@@ -195,8 +197,8 @@ function OverviewPanel() {
         </NestedBox>
       </div>
 
-      {/* Right: callout cards */}
-      <div className="w-56 shrink-0 flex flex-col gap-2">
+      {/* Right: callout cards — 1/3 width */}
+      <div className="flex-[1] flex flex-col gap-2">
         {CALLOUT_CARDS.map((card) => (
           <div
             key={card.label}
