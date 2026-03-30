@@ -2,6 +2,7 @@ package com.checkout.nexus.lesimulator.service;
 
 import com.checkout.nexus.lesimulator.config.LeBatchConfig;
 import com.checkout.nexus.lesimulator.model.LeLinkedTransaction;
+import com.checkout.nexus.lesimulator.model.SchemeProfile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -13,7 +14,6 @@ import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,12 +26,13 @@ public class SimulatorService {
     private final KafkaTemplate<String, LeLinkedTransaction> kafkaTemplate;
     private final LeBatchConfig config;
     private final ScenarioLoader scenarioLoader;
+    private final RandomSequenceEmitter randomSequenceEmitter;
 
     private TaskScheduler taskScheduler;
     private ScheduledFuture<?> randomFuture;
-    private final AtomicReference<String> mode = new AtomicReference<>("idle");
-    private final AtomicReference<String> currentScenario = new AtomicReference<>(null);
-    private final AtomicInteger messagesProduced = new AtomicInteger(0);
+    private final AtomicReference<String> mode             = new AtomicReference<>("idle");
+    private final AtomicReference<String> currentScenario  = new AtomicReference<>(null);
+    private final AtomicInteger messagesProduced            = new AtomicInteger(0);
 
     @PostConstruct
     public void init() {
@@ -42,20 +43,19 @@ public class SimulatorService {
         this.taskScheduler = scheduler;
     }
 
-    public void playScenario(String scenarioId, int delayMs) {
+    public void playScenario(String scenarioId, int delayMs, SchemeProfile scheme) {
         if (!"idle".equals(mode.get())) {
             throw new IllegalStateException("Simulator is already running in mode: " + mode.get());
         }
-
         mode.set("scenario");
         currentScenario.set(scenarioId);
 
         taskScheduler.schedule(() -> {
             try {
-                List<LeLinkedTransaction> versions = scenarioLoader.loadScenario(scenarioId);
+                List<LeLinkedTransaction> versions = scenarioLoader.loadScenario(scenarioId, scheme);
                 for (LeLinkedTransaction version : versions) {
-                    log.info("Producing LE transaction: actionId={}, version={}",
-                        version.getActionId(), version.getTransactionVersion());
+                    log.info("Producing LE transaction: actionId={}, version={}, scheme={}",
+                        version.getActionId(), version.getTransactionVersion(), scheme.schemeName());
                     kafkaTemplate.send(config.getTopicName(), version.getActionId(), version);
                     messagesProduced.incrementAndGet();
                     if (delayMs > 0) {
@@ -77,22 +77,16 @@ public class SimulatorService {
         if (!"idle".equals(mode.get())) {
             throw new IllegalStateException("Simulator is already running in mode: " + mode.get());
         }
-
         mode.set("random");
-        Random rnd = new Random();
 
         randomFuture = taskScheduler.scheduleAtFixedRate(() -> {
             try {
-                LeLinkedTransaction txn = rnd.nextBoolean()
-                    ? scenarioLoader.randomCapture()
-                    : scenarioLoader.randomRefund();
-
-                log.info("Producing random LE transaction: actionId={}, version={}",
-                    txn.getActionId(), txn.getTransactionVersion());
-                kafkaTemplate.send(config.getTopicName(), txn.getActionId(), txn);
-                messagesProduced.incrementAndGet();
+                randomSequenceEmitter.emitSequence(500);
+                messagesProduced.addAndGet(4);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             } catch (Exception e) {
-                log.error("Error in random generation", e);
+                log.error("Error in random sequence generation", e);
             }
         }, Duration.ofMillis(intervalMs));
     }
