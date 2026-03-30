@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Navigate, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import DlqPage from './pages/DlqPage'
@@ -8,6 +8,11 @@ import LiveScreen from './pages/LiveScreen'
 import Rules from './pages/Rules'
 import ChartOfAccounts from './pages/ChartOfAccounts'
 import PostingErrors from './pages/PostingErrors'
+import LearnLayout from './pages/learn/LearnLayout'
+import SchemaExplorer from './pages/learn/SchemaExplorer'
+import ExamplesPage from './pages/learn/ExamplesPage'
+import LEvsNexus from './pages/learn/LEvsNexus'
+import ProductMatrix from './pages/learn/ProductMatrix'
 
 function App() {
   return (
@@ -21,6 +26,13 @@ function App() {
         <Route path="/rules" element={<Rules />} />
         <Route path="/accounts" element={<ChartOfAccounts />} />
         <Route path="/posting-errors" element={<PostingErrors />} />
+        <Route element={<LearnLayout />}>
+          <Route path="/learn" element={<Navigate to="/learn/schema" replace />} />
+          <Route path="/learn/schema" element={<SchemaExplorer />} />
+          <Route path="/learn/products" element={<ProductMatrix />} />
+          <Route path="/learn/examples" element={<ExamplesPage />} />
+          <Route path="/learn/le-vs-nexus" element={<LEvsNexus />} />
+        </Route>
       </Route>
     </Routes>
   )

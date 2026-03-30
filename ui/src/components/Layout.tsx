@@ -3,14 +3,15 @@ import { useWebSocket } from '../hooks/useWebSocket'
 import ToastContainer from './Toast'
 
 const NAV_LINKS = [
-  { to: '/', label: 'Dashboard' },
-  { to: '/dlq', label: 'DLQ' },
-  { to: '/config', label: 'Config' },
-  { to: '/test-bench', label: 'Test Bench' },
-  { to: '/live', label: 'Live' },
-  { to: '/accounts', label: 'Accounts' },
-  { to: '/rules', label: 'Rules' },
-  { to: '/posting-errors', label: 'Errors' },
+  { to: '/', label: 'Dashboard', end: true },
+  { to: '/dlq', label: 'DLQ', end: false },
+  { to: '/config', label: 'Config', end: false },
+  { to: '/test-bench', label: 'Test Bench', end: false },
+  { to: '/live', label: 'Live', end: false },
+  { to: '/accounts', label: 'Accounts', end: false },
+  { to: '/rules', label: 'Rules', end: false },
+  { to: '/posting-errors', label: 'Errors', end: false },
+  { to: '/learn', label: 'Learn', end: false },
 ] as const
 
 export default function Layout() {
@@ -52,11 +53,11 @@ export default function Layout() {
 
           {/* Nav links */}
           <div className="flex items-center gap-1 bg-navy-900 rounded-lg p-1">
-            {NAV_LINKS.map(({ to, label }) => (
+            {NAV_LINKS.map(({ to, label, end }) => (
               <NavLink
                 key={to}
                 to={to}
-                end={to === '/'}
+                end={end}
                 className={({ isActive }) =>
                   `px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
                     isActive
