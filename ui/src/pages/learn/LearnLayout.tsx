@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 
 const SUB_NAV = [
   { to: '/learn/schema', label: 'Schema' },
+  { to: '/learn/products', label: 'Products' },
   { to: '/learn/examples', label: 'Examples' },
   { to: '/learn/le-vs-nexus', label: 'LE vs Nexus' },
 ] as const

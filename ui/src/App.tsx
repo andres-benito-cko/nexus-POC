@@ -9,6 +9,7 @@ import LearnLayout from './pages/learn/LearnLayout'
 import SchemaExplorer from './pages/learn/SchemaExplorer'
 import ExamplesPage from './pages/learn/ExamplesPage'
 import LEvsNexus from './pages/learn/LEvsNexus'
+import ProductMatrix from './pages/learn/ProductMatrix'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route element={<LearnLayout />}>
           <Route path="/learn" element={<Navigate to="/learn/schema" replace />} />
           <Route path="/learn/schema" element={<SchemaExplorer />} />
+          <Route path="/learn/products" element={<ProductMatrix />} />
           <Route path="/learn/examples" element={<ExamplesPage />} />
           <Route path="/learn/le-vs-nexus" element={<LEvsNexus />} />
         </Route>
