@@ -33,12 +33,12 @@ export const LEARN_EXAMPLES: LearnExample[] = [
   {
     id: 'settled-capture',
     title: 'Settled Capture',
-    subtitle: 'GW + SD → LIVE/SETTLED, SCHEME_SETTLEMENT + FUNDING legs',
+    subtitle: 'GW + COS + Balances + SD (v4) → LIVE/SETTLED, all pillars present',
     lePayload: {
       id: 'le-002',
       actionId: 'act_cap_002',
       actionRootId: 'pay_002',
-      transactionVersion: 2,
+      transactionVersion: 4,
       gatewayEvents: [
         {
           eventType: 'payment_captured',
@@ -48,8 +48,43 @@ export const LEARN_EXAMPLES: LearnExample[] = [
           acquirerCountry: 'GB',
         },
       ],
-      balancesChangedEvents: [],
-      cosEvents: [],
+      cosEvents: [
+        {
+          payload: {
+            fee: { value: 0.92, currencyCode: 'EUR' },
+            isPredicted: true,
+            feeType: 'FEE_TYPE_SCHEME',
+            direction: 'DEBIT',
+          },
+          metadata: {
+            paymentMethod: 'visa',
+            acquirerName: 'CKO_UK_LTD',
+            acquirerCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
+          },
+        },
+      ],
+      balancesChangedEvents: [
+        {
+          metadata: {
+            clientId: 'cli_acme_corp',
+            paymentMethod: 'VISA',
+            metadataType: 'BALANCES_CHANGED_METADATA_TYPE_CARD_PAYMENTS',
+            actionType: 'BALANCES_CHANGED_ACTION_TYPE_CAPTURE',
+            settlementCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
+            acquirerCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
+          },
+          actions: [
+            {
+              changes: {
+                pending: {
+                  holdingAmount: { value: 200.0, currencyCode: 'EUR' },
+                  processingAmount: { value: 200.0, currencyCode: 'EUR' },
+                },
+              },
+            },
+          ],
+        },
+      ],
       schemeSettlementEvents: [
         {
           payload: {
@@ -63,7 +98,7 @@ export const LEARN_EXAMPLES: LearnExample[] = [
             ],
           },
           metadata: {
-            scheme: 'VISA',
+            scheme: 'Visa',
             transactionType: 'Capture',
             clientId: 'cli_acme_corp',
             settlementCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
@@ -81,12 +116,12 @@ export const LEARN_EXAMPLES: LearnExample[] = [
   {
     id: 'cross-currency',
     title: 'Cross-Currency Capture',
-    subtitle: 'USD captured, EUR settled — currencies differ between GW and SD',
+    subtitle: 'USD captured, EUR settled (v4) — Balances holds both processing and holding amounts',
     lePayload: {
       id: 'le-003',
       actionId: 'act_cap_003',
       actionRootId: 'pay_003',
-      transactionVersion: 2,
+      transactionVersion: 4,
       gatewayEvents: [
         {
           eventType: 'payment_captured',
@@ -96,8 +131,43 @@ export const LEARN_EXAMPLES: LearnExample[] = [
           acquirerCountry: 'GB',
         },
       ],
-      balancesChangedEvents: [],
-      cosEvents: [],
+      cosEvents: [
+        {
+          payload: {
+            fee: { value: 0.28, currencyCode: 'EUR' },
+            isPredicted: true,
+            feeType: 'FEE_TYPE_SCHEME',
+            direction: 'DEBIT',
+          },
+          metadata: {
+            paymentMethod: 'mastercard',
+            acquirerName: 'CKO_UK_LTD',
+            acquirerCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
+          },
+        },
+      ],
+      balancesChangedEvents: [
+        {
+          metadata: {
+            clientId: 'cli_acme_corp',
+            paymentMethod: 'MASTERCARD',
+            metadataType: 'BALANCES_CHANGED_METADATA_TYPE_CARD_PAYMENTS',
+            actionType: 'BALANCES_CHANGED_ACTION_TYPE_CAPTURE',
+            settlementCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
+            acquirerCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
+          },
+          actions: [
+            {
+              changes: {
+                pending: {
+                  holdingAmount: { value: 92.0, currencyCode: 'EUR' },
+                  processingAmount: { value: 100.0, currencyCode: 'USD' },
+                },
+              },
+            },
+          ],
+        },
+      ],
       schemeSettlementEvents: [
         {
           payload: {
@@ -110,7 +180,7 @@ export const LEARN_EXAMPLES: LearnExample[] = [
             ],
           },
           metadata: {
-            scheme: 'MASTERCARD',
+            scheme: 'Mastercard',
             transactionType: 'Capture',
             clientId: 'cli_acme_corp',
             settlementCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
@@ -146,7 +216,7 @@ export const LEARN_EXAMPLES: LearnExample[] = [
           payload: {
             fee: { value: 1.25, currencyCode: 'GBP' },
             isPredicted: true,
-            feeType: 'FEE_TYPE_INTERCHANGE',
+            feeType: 'FEE_TYPE_SCHEME',
             direction: 'DEBIT',
           },
           metadata: {
@@ -207,7 +277,7 @@ export const LEARN_EXAMPLES: LearnExample[] = [
             fees: [],
           },
           metadata: {
-            scheme: 'VISA',
+            scheme: 'Visa',
             transactionType: 'Chargeback',
             clientId: 'cli_acme_corp',
             settlementCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
@@ -232,15 +302,19 @@ export const LEARN_EXAMPLES: LearnExample[] = [
         {
           metadata: {
             clientId: 'cli_acme_corp',
+            metadataType: 'BALANCES_CHANGED_METADATA_TYPE_CARD_PAYMENTS',
+            actionType: 'CARD_PAYOUT',
             settlementCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
             acquirerCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
-            actionType: 'CARD_PAYOUT',
             valueDate: '2026-03-22',
           },
           actions: [
             {
               changes: {
-                fundingAmount: { value: 250.0, currencyCode: 'GBP' },
+                pending: {
+                  holdingAmount: { value: 250.0, currencyCode: 'GBP' },
+                  processingAmount: { value: 250.0, currencyCode: 'GBP' },
+                },
               },
             },
           ],
@@ -265,15 +339,19 @@ export const LEARN_EXAMPLES: LearnExample[] = [
         {
           metadata: {
             clientId: 'cli_acme_corp',
+            metadataType: 'BALANCES_CHANGED_METADATA_TYPE_CARD_PAYMENTS',
+            actionType: 'TOP_UP',
             settlementCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
             acquirerCompanyCkoLegalEntityCode: 'CKO_UK_LTD',
-            actionType: 'TOP_UP',
             valueDate: '2026-03-22',
           },
           actions: [
             {
               changes: {
-                fundingAmount: { value: 1000.0, currencyCode: 'EUR' },
+                pending: {
+                  holdingAmount: { value: 1000.0, currencyCode: 'EUR' },
+                  processingAmount: { value: 1000.0, currencyCode: 'EUR' },
+                },
               },
             },
           ],
