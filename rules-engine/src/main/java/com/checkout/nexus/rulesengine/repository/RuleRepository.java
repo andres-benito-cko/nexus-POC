@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface RuleRepository extends JpaRepository<Rule, UUID> {
 
     List<Rule> findByEnabledTrue();
+
+    boolean existsByDebitAccountOrCreditAccount(String debitAccount, String creditAccount);
 }
