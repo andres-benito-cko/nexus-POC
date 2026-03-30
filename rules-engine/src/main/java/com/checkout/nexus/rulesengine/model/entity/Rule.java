@@ -1,5 +1,6 @@
 package com.checkout.nexus.rulesengine.model.entity;
 
+import com.checkout.nexus.rulesengine.model.FiringContext;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,6 +38,20 @@ public class Rule {
 
     @Column(name = "leg_type")
     private String legType;
+
+    @Column(name = "firing_context", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private FiringContext firingContext = FiringContext.LEG;
+
+    @Column(name = "leg_status")
+    private String legStatus;
+
+    @Column(name = "fee_type")
+    private String feeType;
+
+    @Column(name = "passthrough")
+    private Boolean passthrough;
 
     @Column(name = "party_type")
     private String partyType;

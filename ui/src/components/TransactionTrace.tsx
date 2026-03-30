@@ -183,7 +183,7 @@ export default function TransactionTrace({ data }: { data: TransactionData }) {
           {transactions.map((txn, ti) => (
             <CollapsibleSection
               key={txn.transaction_id ?? ti}
-              title={`${txn.product_type ?? 'UNKNOWN'} / ${trade.transaction_type ?? 'UNKNOWN'}`}
+              title={`${txn.product_type ?? 'UNKNOWN'} / ${txn.transaction_type ?? 'UNKNOWN'}`}
               badge={txn.transaction_status}
               defaultOpen={ti === 0}
             >
@@ -196,7 +196,7 @@ export default function TransactionTrace({ data }: { data: TransactionData }) {
                 )}
               </div>
 
-              {txn.legs && trade.legs.length > 0 ? (
+              {txn.legs && txn.legs.length > 0 ? (
                 <div className="space-y-2">
                   {txn.legs.map((leg, li) => (
                     <LegCard key={li} leg={leg} index={li} />

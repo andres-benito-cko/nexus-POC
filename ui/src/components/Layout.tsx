@@ -8,6 +8,9 @@ const NAV_LINKS = [
   { to: '/config', label: 'Config' },
   { to: '/test-bench', label: 'Test Bench' },
   { to: '/live', label: 'Live' },
+  { to: '/accounts', label: 'Accounts' },
+  { to: '/rules', label: 'Rules' },
+  { to: '/posting-errors', label: 'Errors' },
 ] as const
 
 export default function Layout() {

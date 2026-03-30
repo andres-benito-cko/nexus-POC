@@ -43,7 +43,7 @@ public class NexusBlock {
     private String periodEnd;
 
     @JsonProperty("transactions")
-    private List<Transaction> trades;
+    private List<Transaction> transactions;
 
     @Data
     @NoArgsConstructor
@@ -127,5 +127,7 @@ public class NexusBlock {
         private String feeCurrency;
         @JsonProperty("fee_status")
         private String feeStatus;
+        @JsonProperty("passthrough")
+        private Boolean passthrough;
     }
 }
