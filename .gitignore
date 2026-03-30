@@ -23,3 +23,6 @@ postgres_data/
 # Secrets
 .env
 .env.local
+
+# Brainstorming sessions
+.superpowers/
