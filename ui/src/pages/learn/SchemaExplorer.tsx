@@ -7,6 +7,7 @@ interface PropertyDef {
   enum?: string[]
   description?: string
   'x-le-source'?: string
+  items?: { $ref?: string }
 }
 
 interface NodeSchema {
@@ -45,10 +46,8 @@ function getNodeSchema(node: NodeName): NodeSchema {
 }
 
 function resolveType(prop: PropertyDef): string {
-  if (prop.$ref) {
-    const segments = prop.$ref.split('/')
-    return segments[segments.length - 1]
-  }
+  if (prop.$ref) { const s = prop.$ref.split('/'); return s[s.length - 1] }
+  if (prop.type === 'array' && prop.items?.$ref) { const s = prop.items.$ref.split('/'); return s[s.length - 1] + '[]' }
   if (prop.enum) return 'enum'
   return prop.type ?? '?'
 }
