@@ -9,7 +9,7 @@ const SUB_NAV = [
 export default function LearnLayout() {
   return (
     <div>
-      <div className="-m-6 mb-0 border-b border-zinc-200 bg-white px-6">
+      <div className="sticky top-14 z-40 -m-6 mb-0 border-b border-zinc-200 bg-white px-6">
         <div className="flex items-center gap-1">
           {SUB_NAV.map(({ to, label }) => (
             <NavLink
