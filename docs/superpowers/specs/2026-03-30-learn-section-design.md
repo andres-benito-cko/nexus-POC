@@ -136,7 +136,7 @@ Pillars covered: Top-level, Gateway, COS, FIAPI, Scheme Settlement, Cash.
 
 Fields that are not surfaced in Nexus shown in muted style with "(not surfaced)" in the Nexus Field column.
 
-Source: `schema/le_nexus_mapping.md` content, rendered as static HTML.
+Source: content from `schema/le_nexus_mapping.md`, hardcoded as data in `LEvsNexus.tsx` (not parsed from the `.md` file at runtime). The mapping doc is the reference; the component owns the rendered representation.
 
 ---
 
