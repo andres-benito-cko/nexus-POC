@@ -1,5 +1,6 @@
 package com.checkout.nexus.rulesengine.model.entity;
 
+import com.checkout.nexus.rulesengine.model.PostingSide;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,11 +38,12 @@ public class LedgerEntry {
     @Column(name = "leg_id")
     private String legId;
 
-    @Column(name = "debit_account", nullable = false)
-    private String debitAccount;
+    @Column(nullable = false)
+    private String account;
 
-    @Column(name = "credit_account", nullable = false)
-    private String creditAccount;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PostingSide side;
 
     @Column(nullable = false, precision = 20, scale = 6)
     private BigDecimal amount;

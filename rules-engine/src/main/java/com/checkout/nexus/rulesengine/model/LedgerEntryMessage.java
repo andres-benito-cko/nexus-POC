@@ -9,9 +9,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-/**
- * Kafka message representation of a ledger entry.
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -36,11 +33,11 @@ public class LedgerEntryMessage {
     @JsonProperty("legId")
     private String legId;
 
-    @JsonProperty("debitAccount")
-    private String debitAccount;
+    @JsonProperty("account")
+    private String account;
 
-    @JsonProperty("creditAccount")
-    private String creditAccount;
+    @JsonProperty("side")
+    private PostingSide side;
 
     @JsonProperty("amount")
     private BigDecimal amount;
