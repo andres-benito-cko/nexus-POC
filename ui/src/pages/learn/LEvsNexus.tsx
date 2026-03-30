@@ -1,3 +1,5 @@
+import React from 'react'
+
 interface MappingEntry {
   le: string
   nexus: string
@@ -335,8 +337,8 @@ export default function LEvsNexus() {
             </thead>
             <tbody>
               {pillarGroups.map((group) => (
-                <>
-                  <tr key={group.name} className="bg-zinc-50">
+                <React.Fragment key={group.name}>
+                  <tr className="bg-zinc-50">
                     <td
                       colSpan={3}
                       className="px-3 py-2 font-semibold text-zinc-600 text-xs uppercase tracking-wider border-t border-b border-zinc-200"
@@ -344,9 +346,9 @@ export default function LEvsNexus() {
                       {group.name}
                     </td>
                   </tr>
-                  {group.entries.map((entry, i) => (
+                  {group.entries.map((entry) => (
                     <tr
-                      key={`${group.name}-${i}`}
+                      key={`${group.name}::${entry.le}`}
                       className="border-t border-zinc-100 hover:bg-zinc-50"
                     >
                       <td className="px-3 py-2 font-mono text-zinc-800 text-xs align-top">{entry.le}</td>
@@ -360,7 +362,7 @@ export default function LEvsNexus() {
                       <td className="px-3 py-2 text-zinc-500 text-xs align-top">{entry.notes}</td>
                     </tr>
                   ))}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
