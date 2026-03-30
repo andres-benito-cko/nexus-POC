@@ -159,3 +159,102 @@ export function playScenario(id: string): Promise<void> {
 export function stopSimulator(): Promise<void> {
   return fetchSimulator('/simulate/stop', { method: 'POST' })
 }
+
+// --- Rules Engine direct API (port 8080) ---
+
+const RULES_ENGINE_API = 'http://localhost:8080'
+
+async function fetchRulesEngine<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${RULES_ENGINE_API}${path}`, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...init?.headers },
+  })
+  if (!res.ok) throw new Error(`Rules Engine ${res.status}: ${res.statusText}`)
+  return res.json()
+}
+
+// --- Account types and API ---
+
+export interface Account {
+  code: string
+  name: string
+  accountType: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE' | 'CONTROL'
+  normalBalance: 'DEBIT' | 'CREDIT'
+  description?: string
+  enabled: boolean
+  createdAt: string
+}
+
+export function getAccounts(): Promise<Account[]> {
+  return fetchRulesEngine('/accounts')
+}
+
+export function createAccount(account: Omit<Account, 'createdAt'>): Promise<Account> {
+  return fetchRulesEngine('/accounts', { method: 'POST', body: JSON.stringify(account) })
+}
+
+export function updateAccount(code: string, account: Partial<Account>): Promise<Account> {
+  return fetchRulesEngine(`/accounts/${code}`, { method: 'PUT', body: JSON.stringify(account) })
+}
+
+export function deleteAccount(code: string): Promise<void> {
+  return fetchRulesEngine(`/accounts/${code}`, { method: 'DELETE' })
+}
+
+// --- Rule types and API ---
+
+export interface Rule {
+  id?: string
+  name: string
+  description?: string
+  productType?: string
+  transactionType?: string
+  transactionStatus?: string
+  legType?: string
+  legStatus?: string
+  firingContext: 'LEG' | 'FEE'
+  feeType?: string
+  passthrough?: boolean | null
+  debitAccount: string
+  creditAccount: string
+  amountSource: string
+  enabled: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export function getRules(): Promise<Rule[]> {
+  return fetchRulesEngine('/rules')
+}
+
+export function createRule(rule: Omit<Rule, 'id' | 'createdAt' | 'updatedAt'>): Promise<Rule> {
+  return fetchRulesEngine('/rules', { method: 'POST', body: JSON.stringify(rule) })
+}
+
+export function updateRule(id: string, rule: Rule): Promise<Rule> {
+  return fetchRulesEngine(`/rules/${id}`, { method: 'PUT', body: JSON.stringify(rule) })
+}
+
+export function deleteRule(id: string): Promise<void> {
+  return fetchRulesEngine(`/rules/${id}`, { method: 'DELETE' })
+}
+
+// --- Posting error types and API ---
+
+export interface PostingError {
+  id: string
+  nexusId: string
+  transactionId: string
+  currency: string
+  debitTotal: number
+  creditTotal: number
+  ruleIds?: string
+  createdAt: string
+}
+
+export function getPostingErrors(params?: { nexusId?: string; transactionId?: string }): Promise<PostingError[]> {
+  const query = new URLSearchParams()
+  if (params?.nexusId) query.set('nexusId', params.nexusId)
+  if (params?.transactionId) query.set('transactionId', params.transactionId)
+  return fetchRulesEngine(`/ledger/errors?${query}`)
+}
