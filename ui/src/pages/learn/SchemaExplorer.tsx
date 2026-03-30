@@ -23,18 +23,18 @@ interface SchemaRoot extends NodeSchema {
 
 const schema = schemaRaw as unknown as SchemaRoot
 
-type NodeName = 'Transaction' | 'Trade' | 'TradeMetadata' | 'Leg' | 'Party' | 'Fee'
+type NodeName = 'Block' | 'Transaction' | 'Transaction Metadata' | 'Leg' | 'Party' | 'Fee'
 
-const NODE_NAMES: NodeName[] = ['Transaction', 'Trade', 'TradeMetadata', 'Leg', 'Party', 'Fee']
+const NODE_NAMES: NodeName[] = ['Block', 'Transaction', 'Transaction Metadata', 'Leg', 'Party', 'Fee']
 
 function getNodeSchema(node: NodeName): NodeSchema {
   const defs = schema.$defs ?? {}
   switch (node) {
-    case 'Transaction':
+    case 'Block':
       return schema
-    case 'Trade':
+    case 'Transaction':
       return defs['Transaction'] ?? {}
-    case 'TradeMetadata':
+    case 'Transaction Metadata':
       return defs['TransactionMetadata'] ?? {}
     case 'Leg':
       return defs['Leg'] ?? {}
@@ -81,7 +81,7 @@ function buildRows(nodeSchema: NodeSchema): { rows: FieldRow[]; hasLeSource: boo
 }
 
 export default function SchemaExplorer() {
-  const [active, setActive] = useState<NodeName>('Transaction')
+  const [active, setActive] = useState<NodeName>('Block')
   const nodeSchema = getNodeSchema(active)
   const { rows, hasLeSource } = buildRows(nodeSchema)
 

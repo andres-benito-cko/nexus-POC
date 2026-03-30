@@ -4,29 +4,11 @@ import { runTestBench } from '../../api/client'
 import TransactionTrace, { TransactionData } from '../../components/TransactionTrace'
 
 function JsonPreview({ value }: { value: unknown }) {
-  const [expanded, setExpanded] = useState(false)
   const json = JSON.stringify(value, null, 2)
-  const lines = json.split('\n')
-  const isLong = lines.length > 20
-
   return (
-    <div className="relative">
-      <pre
-        className={`text-xs font-mono bg-zinc-50 border border-zinc-200 rounded p-3 overflow-auto ${
-          expanded ? 'max-h-96' : 'max-h-40'
-        }`}
-      >
-        {json}
-      </pre>
-      {isLong && (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="mt-1 text-xs text-cyan-600 hover:text-cyan-800"
-        >
-          {expanded ? 'Collapse' : `Expand (${lines.length} lines)`}
-        </button>
-      )}
-    </div>
+    <pre className="flex-1 min-h-0 text-xs font-mono bg-zinc-50 border border-zinc-200 rounded p-3 overflow-auto">
+      {json}
+    </pre>
   )
 }
 
@@ -119,7 +101,7 @@ export default function ExamplesPage() {
       {/* Right panel */}
       <div className="flex-1 min-w-0 grid grid-cols-2 gap-4 overflow-hidden">
         {/* LE Event In */}
-        <div className="flex flex-col min-h-0 overflow-y-auto">
+        <div className="flex flex-col min-h-0">
           <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
             LE Event In
           </p>

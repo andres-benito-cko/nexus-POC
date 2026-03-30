@@ -308,7 +308,7 @@ const pillarGroups: PillarGroup[] = [
 
 export default function LEvsNexus() {
   return (
-    <div className="max-w-4xl space-y-8 py-6">
+    <div className="space-y-8 py-6">
       <section>
         <h2 className="text-lg font-semibold text-zinc-900 mb-4">Key Principles</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -327,12 +327,12 @@ export default function LEvsNexus() {
       <section>
         <h2 className="text-lg font-semibold text-zinc-900 mb-4">Field Mapping by Pillar</h2>
         <div className="border border-zinc-200 rounded-lg overflow-hidden">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse table-fixed">
             <thead>
               <tr className="bg-zinc-100 border-b border-zinc-200">
-                <th className="text-left px-3 py-2 text-xs font-semibold text-zinc-600 uppercase tracking-wider w-1/3">LE Field</th>
-                <th className="text-left px-3 py-2 text-xs font-semibold text-zinc-600 uppercase tracking-wider w-1/3">Nexus Field</th>
-                <th className="text-left px-3 py-2 text-xs font-semibold text-zinc-600 uppercase tracking-wider w-1/3">Notes</th>
+                <th className="text-left px-3 py-2 text-xs font-semibold text-zinc-600 uppercase tracking-wider w-1/4">LE Field</th>
+                <th className="text-left px-3 py-2 text-xs font-semibold text-zinc-600 uppercase tracking-wider w-2/5">Nexus Field</th>
+                <th className="text-left px-3 py-2 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Notes</th>
               </tr>
             </thead>
             <tbody>
