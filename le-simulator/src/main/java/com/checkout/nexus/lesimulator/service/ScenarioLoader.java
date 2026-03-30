@@ -3,9 +3,8 @@ package com.checkout.nexus.lesimulator.service;
 import com.checkout.nexus.lesimulator.model.*;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Component
@@ -13,11 +12,10 @@ public class ScenarioLoader {
 
     public record ScenarioInfo(String id, String name, String description, int versionCount) {}
 
-    private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ISO_DATE_TIME;
-    private static final String TODAY     = LocalDate.now().toString();
-    private static final String TOMORROW  = LocalDate.now().plusDays(1).toString();
-    private static final String DAY_AFTER = LocalDate.now().plusDays(2).toString();
-    private static final String NOW       = LocalDateTime.now().format(DT_FMT) + "Z";
+    private static String today()     { return LocalDate.now().toString(); }
+    private static String tomorrow()  { return LocalDate.now().plusDays(1).toString(); }
+    private static String dayAfter()  { return LocalDate.now().plusDays(2).toString(); }
+    private static String now()       { return Instant.now().toString(); }
 
     // -------------------------------------------------------------------------
     // Public API
@@ -82,11 +80,11 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         v3.setBalancesChangedEvents(List.of(balancesCapture(env, clientId, "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, TOMORROW, r2(amount * 0.02), scheme)));
+            amount, ccy, amount, ccy, tomorrow(), r2(amount * 0.02), scheme)));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, ccy, amount, ccy,
-            scheme, "Capture", DAY_AFTER, "CKO_UK_LTD", "CKO_UK_LTD", clientId,
+            scheme, "Capture", dayAfter(), "CKO_UK_LTD", "CKO_UK_LTD", clientId,
             List.of(sdFee("INTERCHANGE_FEE", r2(amount * scheme.interchangeFeeRate()), ccy),
                     sdFee("SCHEME_FEE",      r2(amount * scheme.schemeFeeRate()),      ccy)))));
 
@@ -118,11 +116,11 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         v3.setBalancesChangedEvents(List.of(balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, TOMORROW, r2(amount * 0.02), s)));
+            amount, ccy, amount, ccy, tomorrow(), r2(amount * 0.02), s)));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, ccy, amount, ccy,
-            s, "Capture", DAY_AFTER, "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp",
+            s, "Capture", dayAfter(), "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp",
             List.of(sdFee("INTERCHANGE_FEE", r2(amount * s.interchangeFeeRate()), ccy),
                     sdFee("SCHEME_FEE",      r2(amount * s.schemeFeeRate()),      ccy)))));
 
@@ -152,11 +150,11 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         v3.setBalancesChangedEvents(List.of(balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            holdingAmount, holdingCcy, processingAmount, processingCcy, TOMORROW, r2(holdingAmount * 0.02), s)));
+            holdingAmount, holdingCcy, processingAmount, processingCcy, tomorrow(), r2(holdingAmount * 0.02), s)));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, processingAmount, processingCcy, processingAmount, processingCcy,
-            s, "Capture", DAY_AFTER, "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp",
+            s, "Capture", dayAfter(), "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp",
             List.of(sdFee("INTERCHANGE_FEE", r2(processingAmount * s.interchangeFeeRate()), processingCcy),
                     sdFee("SCHEME_FEE",      r2(processingAmount * s.schemeFeeRate()),      processingCcy)))));
 
@@ -184,11 +182,11 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         v3.setBalancesChangedEvents(List.of(balancesCapture(env, "cli_global_ltd", "CKO_DE_GMBH", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, TOMORROW, r2(amount * 0.02), s)));
+            amount, ccy, amount, ccy, tomorrow(), r2(amount * 0.02), s)));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, ccy, amount, ccy,
-            s, "Capture", DAY_AFTER, "CKO_UK_LTD", "CKO_DE_GMBH", "cli_global_ltd",
+            s, "Capture", dayAfter(), "CKO_UK_LTD", "CKO_DE_GMBH", "cli_global_ltd",
             List.of(sdFee("INTERCHANGE_FEE", r2(amount * s.interchangeFeeRate()), ccy),
                     sdFee("SCHEME_FEE",      r2(amount * s.schemeFeeRate()),      ccy)))));
 
@@ -218,11 +216,11 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         v3.setBalancesChangedEvents(List.of(balancesCapture(env, "cli_global_ltd", "CKO_DE_GMBH", "CKO_UK_LTD",
-            holdingAmount, holdingCcy, amount, processingCcy, TOMORROW, r2(holdingAmount * 0.02), s)));
+            holdingAmount, holdingCcy, amount, processingCcy, tomorrow(), r2(holdingAmount * 0.02), s)));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, processingCcy, amount, processingCcy,
-            s, "Capture", DAY_AFTER, "CKO_UK_LTD", "CKO_DE_GMBH", "cli_global_ltd",
+            s, "Capture", dayAfter(), "CKO_UK_LTD", "CKO_DE_GMBH", "cli_global_ltd",
             List.of(sdFee("INTERCHANGE_FEE", r2(amount * s.interchangeFeeRate()), processingCcy),
                     sdFee("SCHEME_FEE",      r2(amount * s.schemeFeeRate()),      processingCcy)))));
 
@@ -249,7 +247,7 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         BalancesChangedEvent bce = balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, TOMORROW, 0, s);
+            amount, ccy, amount, ccy, tomorrow(), 0, s);
         bce.getMetadata().setActionType("BALANCES_CHANGED_ACTION_TYPE_REFUND");
         bce.getMetadata().setSourceEventType("payment_refunded");
         bce.getMetadata().setEnhancedActionType("PartialRefund");
@@ -257,7 +255,7 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, ccy, amount, ccy,
-            s, "Refund", DAY_AFTER, "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp", List.of())));
+            s, "Refund", dayAfter(), "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp", List.of())));
 
         return List.of(v1, v2, v3, v4);
     }
@@ -282,14 +280,14 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         BalancesChangedEvent bce = balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, TOMORROW, 0, s);
+            amount, ccy, amount, ccy, tomorrow(), 0, s);
         bce.getMetadata().setActionType("BALANCES_CHANGED_ACTION_TYPE_CHARGEBACK");
         bce.getMetadata().setSourceEventType("payment_chargeback");
         v3.setBalancesChangedEvents(List.of(bce));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, ccy, amount, ccy,
-            s, "Chargeback", DAY_AFTER, "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp",
+            s, "Chargeback", dayAfter(), "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp",
             List.of(sdFee("SCHEME_FEE", 25.00, ccy)))));
 
         return List.of(v1, v2, v3, v4);
@@ -310,17 +308,17 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         BalancesChangedEvent bce = balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, TOMORROW, 0, s);
+            amount, ccy, amount, ccy, tomorrow(), 0, s);
         bce.getMetadata().setActionType("BALANCES_CHANGED_ACTION_TYPE_CARD_PAYOUT");
         bce.getMetadata().setSourceEventType("payment_paid_out");
         v2.setBalancesChangedEvents(List.of(bce));
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
-        v3.setCashEvents(List.of(cashEvent(env, amount, ccy, "credit", "CKO_UK_LTD", "cli_acme_corp", TOMORROW)));
+        v3.setCashEvents(List.of(cashEvent(env, amount, ccy, "credit", "CKO_UK_LTD", "cli_acme_corp", tomorrow(), s)));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, ccy, amount, ccy,
-            s, "PayToCard", DAY_AFTER, "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp", List.of())));
+            s, "PayToCard", dayAfter(), "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp", List.of())));
 
         return List.of(v1, v2, v3, v4);
     }
@@ -340,17 +338,17 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         BalancesChangedEvent bce = balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, TODAY, 0, s);
+            amount, ccy, amount, ccy, today(), 0, s);
         bce.getMetadata().setActionType("BALANCES_CHANGED_ACTION_TYPE_TOP_UP");
         bce.getMetadata().setSourceEventType("payment_top_up");
         v2.setBalancesChangedEvents(List.of(bce));
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
-        v3.setCashEvents(List.of(cashEvent(env, amount, ccy, "debit", "CKO_UK_LTD", "cli_acme_corp", TODAY)));
+        v3.setCashEvents(List.of(cashEvent(env, amount, ccy, "debit", "CKO_UK_LTD", "cli_acme_corp", today(), s)));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, ccy, amount, ccy,
-            s, "Capture", TODAY, "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp", List.of())));
+            s, "Capture", today(), "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp", List.of())));
 
         return List.of(v1, v2, v3, v4);
     }
@@ -365,18 +363,18 @@ public class ScenarioLoader {
         LeLinkedTransaction v1 = LeLinkedTransaction.builder()
             .id(UUID.randomUUID().toString())
             .actionId(actionId).actionRootId(actionRootId).transactionVersion(1)
-            .cashEvents(List.of(cashEvent(env, amount, ccy, "credit", "CKO_UK_LTD", "cli_acme_corp", TODAY)))
+            .cashEvents(List.of(cashEvent(env, amount, ccy, "credit", "CKO_UK_LTD", "cli_acme_corp", today(), s)))
             .build();
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         BalancesChangedEvent bce = balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, TODAY, 0, s);
+            amount, ccy, amount, ccy, today(), 0, s);
         bce.getMetadata().setActionType("BALANCES_CHANGED_ACTION_TYPE_CREDIT");
         v2.setBalancesChangedEvents(List.of(bce));
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         v3.setSchemeSettlementEvents(List.of(sdEvent(env, amount, ccy, amount, ccy,
-            s, "Capture", TODAY, "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp", List.of())));
+            s, "Capture", today(), "CKO_UK_LTD", "CKO_UK_LTD", "cli_acme_corp", List.of())));
 
         return List.of(v1, v2, v3);
     }
@@ -390,7 +388,7 @@ public class ScenarioLoader {
             .actionId(actionId)
             .actionRootId(actionRootId)
             .originUniqueEventId(UUID.randomUUID().toString())
-            .originEventTimestamp(NOW)
+            .originEventTimestamp(now())
             .correctorVersion(0)
             .processedCount(0)
             .build();
@@ -405,7 +403,7 @@ public class ScenarioLoader {
             .envelope(env)
             .paymentId(paymentId)
             .eventType(eventType)
-            .processedOn(NOW)
+            .processedOn(now())
             .amount(AmountValue.builder().value(amount).currencyCode(currency).build())
             .acquirerName("CKO_UK_LTD")
             .acquirerCountry("GB")
@@ -495,7 +493,7 @@ public class ScenarioLoader {
                 .scheme(scheme.schemeName())
                 .transactionType(txnType)
                 .expectedValueDate(valueDate)
-                .centralProcessingDate(TODAY)
+                .centralProcessingDate(today())
                 .settlementServiceName(scheme.settlementServiceName())
                 .settlementCountryCode(scheme.acquirerCountry())
                 .acquirerCompanyCkoLegalEntityCode(acquirerEntity)
@@ -519,7 +517,7 @@ public class ScenarioLoader {
     }
 
     private CashEvent cashEvent(EventEnvelope env, double amount, String currency,
-            String direction, String legalEntity, String entityId, String valueDate) {
+            String direction, String legalEntity, String entityId, String valueDate, SchemeProfile scheme) {
         return CashEvent.builder()
             .envelope(env)
             .standardPayload(CashEvent.CashStandardPayload.builder()
@@ -527,7 +525,7 @@ public class ScenarioLoader {
                 .direction(direction)
                 .build())
             .standardMetadata(CashEvent.CashStandardMetadata.builder()
-                .scheme("VISA")
+                .scheme(scheme.schemeName())
                 .valueDate(valueDate)
                 .legalEntity(legalEntity)
                 .actionType("SETTLEMENT")
@@ -571,27 +569,10 @@ public class ScenarioLoader {
     }
 
     public LeLinkedTransaction randomRefund() {
-        String actionId     = "act_rnd_ref_" + UUID.randomUUID().toString().substring(0, 8);
-        String actionRootId = "pay_rnd_"     + UUID.randomUUID().toString().substring(0, 8);
-        EventEnvelope env   = envelope(actionId, actionRootId);
-        Random rnd          = new Random();
-        double amount       = Math.round((5 + rnd.nextDouble() * 200) * 100.0) / 100.0;
-        String ccy          = "EUR";
-
-        LeLinkedTransaction txn = LeLinkedTransaction.builder()
-            .id(UUID.randomUUID().toString())
-            .actionId(actionId)
-            .actionRootId(actionRootId)
-            .transactionVersion(rnd.nextInt(3) + 2)
-            .gatewayEvents(List.of(gatewayEvent(env, "payment_refunded", amount, ccy, actionRootId)))
-            .build();
-
-        BalancesChangedEvent bce = balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, TOMORROW, 0, SchemeProfile.VISA);
-        bce.getMetadata().setActionType("BALANCES_CHANGED_ACTION_TYPE_REFUND");
-        bce.getMetadata().setSourceEventType("payment_refunded");
-        txn.setBalancesChangedEvents(List.of(bce));
-
-        return txn;
+        Random rnd = new Random();
+        SchemeProfile[] profiles = {SchemeProfile.VISA, SchemeProfile.MASTERCARD, SchemeProfile.AMEX};
+        SchemeProfile scheme = profiles[rnd.nextInt(profiles.length)];
+        List<LeLinkedTransaction> versions = buildAcquiringRefund(scheme);
+        return versions.get(rnd.nextInt(versions.size()));
     }
 }
