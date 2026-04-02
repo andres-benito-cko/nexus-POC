@@ -185,7 +185,13 @@ services:
     restart: unless-stopped
 `),
       'cd /home/ec2-user/nexus-POC',
-      'sudo -u ec2-user docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d zookeeper kafka postgres',
+      // Start zookeeper first and wait for it before starting kafka.
+      // bitnami/kafka registers an ephemeral ZK node at /brokers/ids/1; if kafka
+      // starts before the old session has expired it gets NodeExists and fatally
+      // shuts down. Starting zookeeper first and waiting 15 s avoids the race.
+      'sudo -u ec2-user docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d zookeeper postgres',
+      'sleep 15',
+      'sudo -u ec2-user docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d kafka',
     );
 
     const infraInstance = new ec2.Instance(this, 'InfraInstance', {

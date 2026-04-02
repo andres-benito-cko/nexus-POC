@@ -287,6 +287,21 @@ The `DenyIMDSv1` SCP condition key (`ec2:MetadataHttpTokens`) is only present in
 ### CDK deploy credential resolution
 `npx cdk deploy --profile <name>` does not propagate the profile into the subprocess that uploads assets to S3 and calls CloudFormation. This manifests as "Need to perform AWS calls for account X, but no credentials have been configured" even when the profile is valid. The `make deploy` target works around this by extracting credentials from the profile and passing them as `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_SESSION_TOKEN` env vars.
 
+### Kafka ZooKeeper stale ephemeral node on restart
+When Kafka restarts (e.g. after a Docker daemon restart or instance reboot), it tries to register `/brokers/ids/1` in ZooKeeper. If the previous session's ephemeral node hasn't expired yet, Kafka gets `KeeperErrorCode = NodeExists` and exits fatally.
+
+**Symptoms:** `docker ps` shows kafka as stopped/exited; kafka logs contain `Error while creating ephemeral at /brokers/ids/1, node already exists and owner ... does not match current session`.
+
+**Fix:** Restart ZooKeeper first (which clears all ephemeral nodes), then start Kafka:
+```bash
+make connect-infra
+docker restart nexus-poc_zookeeper_1
+sleep 5
+docker start nexus-poc_kafka_1
+```
+
+The CDK user data avoids this on fresh deploys by starting zookeeper + postgres first, waiting 15 s, then starting kafka.
+
 ### EC2 security group descriptions — ASCII only
 `GroupDescription` and SecurityGroupIngress `Description` fields only accept `a-zA-Z0-9. _-:/()#,@[]+=&;{}!$*`. Unicode characters (em-dash, arrows, etc.) cause a 400 `InvalidRequest` from the EC2 API.
 
