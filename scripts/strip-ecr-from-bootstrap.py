@@ -23,14 +23,17 @@ ecr_keys = [
     'ContainerAssetsRepositoryName',
     'HasCustomContainerAssetsRepositoryName',
     'ContainerAssetsRepository',
+    'ImagePublishingRole',
     'ImagePublishingRoleDefaultPolicy',
     'ImageRepositoryName',
 ]
 
 removed = []
 for key in ecr_keys:
-    # Match a top-level YAML key block (key: followed by indented content)
-    pattern = rf'(?m)^  {re.escape(key)}:(?:\n(?:    .*|\s*))*'
+    # Match a top-level YAML key block (key: followed by indented lines).
+    # Stops when it sees a sibling key (2 spaces + non-whitespace) so it does
+    # not consume the leading indent of the next entry.
+    pattern = rf'(?m)^  {re.escape(key)}:(?:\n(?!  \S)[^\n]*)*'
     before = content
     content = re.sub(pattern, '', content)
     if content != before:
