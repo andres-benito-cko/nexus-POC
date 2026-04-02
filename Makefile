@@ -18,8 +18,8 @@ WORKERS_INSTANCE_ID = $(call _output,WorkersInstanceId)
 # --- One-time setup -----------------------------------------------------------
 
 store-github-token:
-	aws secretsmanager create-secret \
-	  --name nexus-poc/github-token \
+	aws secretsmanager put-secret-value \
+	  --secret-id nexus-poc/github-token \
 	  --secret-string "$(TOKEN)" \
 	  --region $(AWS_REGION) \
 	  --profile $(AWS_PROFILE)
@@ -37,16 +37,26 @@ bootstrap-cdk:
 
 deploy:
 	cd cdk && npm install
-	CDK_DEFAULT_ACCOUNT=591127500072 npm_config_cache=$(TMPDIR)/npm-cache \
-	  npx --prefix cdk cdk deploy \
-	  --profile $(AWS_PROFILE) \
-	  --require-approval never
+	cd cdk && \
+	  AWS_ACCESS_KEY_ID=$$(aws configure get aws_access_key_id --profile $(AWS_PROFILE)) \
+	  AWS_SECRET_ACCESS_KEY=$$(aws configure get aws_secret_access_key --profile $(AWS_PROFILE)) \
+	  AWS_SESSION_TOKEN=$$(aws configure get aws_session_token --profile $(AWS_PROFILE)) \
+	  AWS_DEFAULT_REGION=$(AWS_REGION) \
+	  CDK_DEFAULT_ACCOUNT=591127500072 \
+	  CDK_DEFAULT_REGION=$(AWS_REGION) \
+	  npm_config_cache=$(TMPDIR)/npm-cache \
+	  npx cdk deploy --require-approval never
 
 destroy:
-	CDK_DEFAULT_ACCOUNT=591127500072 npm_config_cache=$(TMPDIR)/npm-cache \
-	  npx --prefix cdk cdk destroy \
-	  --profile $(AWS_PROFILE) \
-	  --force
+	cd cdk && \
+	  AWS_ACCESS_KEY_ID=$$(aws configure get aws_access_key_id --profile $(AWS_PROFILE)) \
+	  AWS_SECRET_ACCESS_KEY=$$(aws configure get aws_secret_access_key --profile $(AWS_PROFILE)) \
+	  AWS_SESSION_TOKEN=$$(aws configure get aws_session_token --profile $(AWS_PROFILE)) \
+	  AWS_DEFAULT_REGION=$(AWS_REGION) \
+	  CDK_DEFAULT_ACCOUNT=591127500072 \
+	  CDK_DEFAULT_REGION=$(AWS_REGION) \
+	  npm_config_cache=$(TMPDIR)/npm-cache \
+	  npx cdk destroy --force
 
 # --- Connect ------------------------------------------------------------------
 

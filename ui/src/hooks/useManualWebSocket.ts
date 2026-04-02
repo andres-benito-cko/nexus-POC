@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 
-const WS_URL = `ws://${window.location.host}/ws`
+const WS_URL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`
 const MAX_MESSAGES = 200
 
 export interface WsMessage {

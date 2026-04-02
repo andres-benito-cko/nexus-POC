@@ -48,7 +48,7 @@ make store-github-token TOKEN=ghp_xxxx
 ```
 Stored at `nexus-poc/github-token`. The instances fetch it at boot to clone the repo.
 
-> **IMPORTANT:** The token in use was exposed in instance logs. Rotate the GitHub PAT and run `make store-github-token TOKEN=<new_token>` before redeploying.
+To rotate the token (e.g. if exposed in logs): `make store-github-token TOKEN=<new_token>`
 
 ## Firewall / Network Constraints
 
@@ -121,6 +121,7 @@ git push
 ```bash
 make deploy
 ```
+The Makefile extracts `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` from the `cko-financial-infrastructure-tooling-qa-OktaIDP-breakglass` profile and passes them as env vars to CDK. This is required because `npx cdk` does not inherit `--profile` into subprocess credential resolution.
 
 The stack takes ~3 minutes. Each instance bootstraps in parallel:
 - **Infra**: installs Docker, clones repo, pulls bitnami/zookeeper + bitnami/kafka + postgres from ECR Public, starts containers.
@@ -168,17 +169,40 @@ sudo -u ec2-user docker-compose \
 
 ## Access the UI
 
-### Via SSM tunnel (always works, requires SSM plugin)
+### Via internal URL (primary — requires corp VPN or Cloud WAN)
+```
+https://nexus-poc.financial-infrastructure-tooling.qa.ckotech.internal
+```
+An internal ALB sits in front of the Workers instance (port 5173). The cert is issued by the org subordinate CA — trusted by corp browsers automatically. Requires Cloudflare non-prod VPN or a machine on the Checkout Cloud WAN.
+
+### Via SSM tunnel (fallback — works without VPN)
 ```bash
-make tunnel   # forwards WorkersInstance:5173 → localhost:5173
+make tunnel   # forwards WorkersInstance:5173 to localhost:5173
 # then open http://localhost:5173
 ```
 
-### Via corporate VPN / Cloud WAN
-If on the Checkout corporate network, the VPC is routed via Cloud WAN:
+### Via raw IP (corp network only)
+If on the Checkout corporate network with Cloud WAN routing:
 ```
 http://10.144.177.30:5173
 ```
+
+## Internal ALB Setup
+
+The stack creates the following resources for the internal URL:
+
+| Resource | Value |
+|---|---|
+| ALB | Internal, `eu-west-1a` + `eu-west-1b` subnets |
+| ALB security group | Inbound 443 from prefix list `pl-0afa2d775d5677fe7` (non-prod-cloudflare-pl) |
+| Private certificate | `nexus-poc.financial-infrastructure-tooling.qa.ckotech.internal` via org CA |
+| Org CA ARN | `arn:aws:acm-pca:eu-west-1:471112826941:certificate-authority/31f7e6a9-1d5f-4776-80b0-0d0d5c3b7be3` |
+| Target group | Workers instance `i-09c6cdc97b7f62684`, port 5173, health check `GET /` |
+| SSL policy | `ELBSecurityPolicy-TLS13-1-2-2021-06` (TLS 1.2+) |
+| Route53 zone | `financial-infrastructure-tooling.qa.ckotech.internal` (ID: `Z0439559123PXDIXAWMOW`) |
+| DNS record | `nexus-poc` A alias → ALB |
+
+The pattern mirrors `engineering-team-metrics` in the `cko-card-processing` account.
 
 ## Docker Images Used
 

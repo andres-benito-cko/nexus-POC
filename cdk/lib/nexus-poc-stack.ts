@@ -2,6 +2,12 @@ import * as cdk from 'aws-cdk-lib/core';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as elbv2targets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as acmpca from 'aws-cdk-lib/aws-acmpca';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as route53targets from 'aws-cdk-lib/aws-route53-targets';
 import { Construct } from 'constructs';
 import { CfnInstance } from 'aws-cdk-lib/aws-ec2';
 
@@ -9,6 +15,21 @@ import { CfnInstance } from 'aws-cdk-lib/aws-ec2';
 const INFRA_IP   = '10.144.177.10'; // zookeeper + kafka + postgres
 const API_IP     = '10.144.177.20'; // nexus-api + nexus-transformer
 const WORKERS_IP = '10.144.177.30'; // le-simulator + rules-engine + ui
+
+// ---------------------------------------------------------------------------
+// Networking constants — discovered via AWS CLI, do not change without
+// re-checking the account state.
+// ---------------------------------------------------------------------------
+// Org subordinate private CA (account 471112826941 — shared PKI infra)
+const PRIVATE_CA_ARN =
+  'arn:aws:acm-pca:eu-west-1:471112826941:certificate-authority/31f7e6a9-1d5f-4776-80b0-0d0d5c3b7be3';
+// Private Route53 zone: financial-infrastructure-tooling.qa.ckotech.internal
+const HOSTED_ZONE_ID   = 'Z0439559123PXDIXAWMOW';
+const HOSTED_ZONE_NAME = 'financial-infrastructure-tooling.qa.ckotech.internal';
+// Cloudflare non-prod VPN managed prefix list (owner: 796217803085)
+const VPN_PREFIX_LIST_ID = 'pl-0afa2d775d5677fe7';
+// UI hostname — full URL: https://nexus-poc.<HOSTED_ZONE_NAME>
+const UI_HOSTNAME = 'nexus-poc';
 
 export class NexusPocStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -21,9 +42,16 @@ export class NexusPocStack extends cdk.Stack {
       vpcId: 'vpc-06b9709ddf6203ec2',
     });
 
+    // eu-west-1a private subnet — used by all three EC2 instances
     const subnet = ec2.Subnet.fromSubnetAttributes(this, 'Subnet', {
       subnetId: 'subnet-0076d4d589390d99d',
       availabilityZone: 'eu-west-1a',
+    });
+
+    // eu-west-1b private subnet — required for ALB (needs ≥2 AZs)
+    const subnetB = ec2.Subnet.fromSubnetAttributes(this, 'SubnetB', {
+      subnetId: 'subnet-0fe25a34500dedb3d',
+      availabilityZone: 'eu-west-1b',
     });
 
     // ---------------------------------------------------------------------------
@@ -205,7 +233,7 @@ services:
     attachLT(apiInstance, API_IP);
 
     // ---------------------------------------------------------------------------
-    // Instance 3 — workers + UI (le-simulator + rules-engine + npm dev)
+    // Instance 3 — workers + UI (le-simulator + rules-engine + ui server)
     // ---------------------------------------------------------------------------
     const workersUD = ec2.UserData.forLinux();
     workersUD.addCommands(
@@ -245,11 +273,93 @@ services:
     attachLT(workersInstance, WORKERS_IP);
 
     // ---------------------------------------------------------------------------
+    // Internal ALB — HTTPS only, Cloudflare VPN ingress, forwards to UI on :5173
+    //
+    // Pattern mirrors engineering-team-metrics (cko-card-processing):
+    //   internal ALB + ACM private cert + Route53 alias → *.ckotech.internal
+    // ---------------------------------------------------------------------------
+
+    // ALB security group — inbound 443 from Cloudflare non-prod VPN only
+    const albSg = new ec2.SecurityGroup(this, 'AlbSg', {
+      vpc,
+      description: 'Nexus POC ALB - inbound from Cloudflare VPN only',
+      allowAllOutbound: true,
+    });
+    albSg.addIngressRule(
+      ec2.Peer.prefixList(VPN_PREFIX_LIST_ID),
+      ec2.Port.tcp(443),
+      'Cloudflare non-prod VPN',
+    );
+
+    // Allow the ALB to reach the workers instance on the UI port
+    sg.addIngressRule(albSg, ec2.Port.tcp(5173), 'ALB to UI (port 5173)');
+
+    // Internal ALB across two AZs (eu-west-1a + eu-west-1b)
+    const alb = new elbv2.ApplicationLoadBalancer(this, 'Alb', {
+      vpc,
+      internetFacing: false,
+      vpcSubnets: { subnets: [subnet, subnetB] },
+      securityGroup: albSg,
+    });
+
+    // ACM private certificate issued by the org subordinate CA
+    const cert = new acm.PrivateCertificate(this, 'UiCert', {
+      domainName: `${UI_HOSTNAME}.${HOSTED_ZONE_NAME}`,
+      certificateAuthority: acmpca.CertificateAuthority.fromCertificateAuthorityArn(
+        this, 'PrivateCA', PRIVATE_CA_ARN,
+      ),
+    });
+
+    // Target group → WorkersInstance:5173
+    const uiTg = new elbv2.ApplicationTargetGroup(this, 'UiTg', {
+      vpc,
+      port: 5173,
+      protocol: elbv2.ApplicationProtocol.HTTP,
+      targetType: elbv2.TargetType.INSTANCE,
+      healthCheck: {
+        path: '/',
+        port: '5173',
+        healthyHttpCodes: '200',
+        interval: cdk.Duration.seconds(30),
+        unhealthyThresholdCount: 3,
+      },
+      targets: [new elbv2targets.InstanceIdTarget(workersInstance.instanceId, 5173)],
+    });
+
+    // HTTPS listener — TLS 1.2+ policy, forwards all traffic to UI target group
+    alb.addListener('Https', {
+      port: 443,
+      protocol: elbv2.ApplicationProtocol.HTTPS,
+      sslPolicy: elbv2.SslPolicy.RECOMMENDED_TLS,
+      certificates: [cert],
+      defaultTargetGroups: [uiTg],
+    });
+
+    // Route53 alias record: nexus-poc.<zone> → ALB
+    const zone = route53.HostedZone.fromHostedZoneAttributes(this, 'Zone', {
+      hostedZoneId: HOSTED_ZONE_ID,
+      zoneName: HOSTED_ZONE_NAME,
+    });
+
+    new route53.ARecord(this, 'UiDns', {
+      zone,
+      recordName: UI_HOSTNAME,
+      target: route53.RecordTarget.fromAlias(
+        new route53targets.LoadBalancerTarget(alb),
+      ),
+      ttl: cdk.Duration.minutes(1),
+    });
+
+    // ---------------------------------------------------------------------------
     // Outputs
     // ---------------------------------------------------------------------------
     const profile = 'cko-financial-infrastructure-tooling-qa-OktaIDP-breakglass';
     const ssmBase = `aws ssm start-session --region ${this.region} --profile ${profile} --target`;
 
+    new cdk.CfnOutput(this, 'UiUrl', {
+      value: `https://${UI_HOSTNAME}.${HOSTED_ZONE_NAME}`,
+      description: 'UI URL — requires corp VPN or Cloud WAN connectivity',
+    });
     new cdk.CfnOutput(this, 'InfraInstanceId',   { value: infraInstance.instanceId });
     new cdk.CfnOutput(this, 'ApiInstanceId',     { value: apiInstance.instanceId });
     new cdk.CfnOutput(this, 'WorkersInstanceId', { value: workersInstance.instanceId });
@@ -268,7 +378,7 @@ services:
     });
     new cdk.CfnOutput(this, 'SsmTunnel', {
       value: `${ssmBase} ${workersInstance.instanceId} --document-name AWS-StartPortForwardingSession --parameters portNumber=5173,localPortNumber=5173`,
-      description: 'Forward UI (port 5173) to localhost:5173 via SSM',
+      description: 'Forward UI (port 5173) to localhost:5173 via SSM (fallback if not on VPN)',
     });
     new cdk.CfnOutput(this, 'InitLogs', {
       value: 'tail -f /var/log/nexus-poc-{infra,api,workers}.log',
