@@ -1,6 +1,6 @@
 package com.checkout.nexus.transformer.engine.pipeline;
 
-import com.checkout.nexus.transformer.engine.config.NexusEngineConfig;
+import com.checkout.nexus.transformer.engine.config.ConfigHolder;
 import com.checkout.nexus.transformer.engine.config.StateConfig;
 import com.checkout.nexus.transformer.engine.config.StateMachineConfig;
 import com.checkout.nexus.transformer.engine.config.TransitionRule;
@@ -21,7 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StateMachineRunner {
 
-    private final NexusEngineConfig config;
+    private final ConfigHolder config;
     private final ExpressionEvaluator evaluator;
 
     /**

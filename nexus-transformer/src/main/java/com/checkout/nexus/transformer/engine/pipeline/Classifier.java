@@ -1,7 +1,7 @@
 package com.checkout.nexus.transformer.engine.pipeline;
 
 import com.checkout.nexus.transformer.engine.config.FamilyRule;
-import com.checkout.nexus.transformer.engine.config.NexusEngineConfig;
+import com.checkout.nexus.transformer.engine.config.ConfigHolder;
 import com.checkout.nexus.transformer.engine.config.TypeClassificationConfig;
 import com.checkout.nexus.transformer.engine.context.LeContext;
 import com.checkout.nexus.transformer.engine.expression.ExpressionEvaluator;
@@ -21,7 +21,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class Classifier {
 
-    private final NexusEngineConfig config;
+    private final ConfigHolder config;
     private final ExpressionEvaluator evaluator;
 
     public ClassificationResult classify(LeContext ctx) {

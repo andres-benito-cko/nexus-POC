@@ -1,7 +1,7 @@
 package com.checkout.nexus.transformer.engine.pipeline;
 
 import com.checkout.nexus.transformer.engine.config.LegConfig;
-import com.checkout.nexus.transformer.engine.config.NexusEngineConfig;
+import com.checkout.nexus.transformer.engine.config.ConfigHolder;
 import com.checkout.nexus.transformer.engine.config.ResolverExpression;
 import com.checkout.nexus.transformer.engine.config.TransactionConfig;
 import com.checkout.nexus.transformer.engine.context.LeContext;
@@ -22,14 +22,14 @@ import java.util.Map;
 
 /**
  * Assembles {@link Leg} objects for a given product type and type
- * using the leg templates defined in {@link NexusEngineConfig}.
+ * using the leg templates defined in {@link ConfigHolder}.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class LegAssembler {
 
-    private final NexusEngineConfig config;
+    private final ConfigHolder config;
     private final ExpressionEvaluator evaluator;
 
     /**

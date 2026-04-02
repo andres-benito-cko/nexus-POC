@@ -1,6 +1,6 @@
 package com.checkout.nexus.transformer.engine.resolver;
 
-import com.checkout.nexus.transformer.engine.config.NexusEngineConfig;
+import com.checkout.nexus.transformer.engine.config.ConfigHolder;
 import com.checkout.nexus.transformer.engine.context.LeContext;
 import com.checkout.nexus.transformer.model.Fee;
 import com.checkout.nexus.transformer.model.le.BalancesChangedEvent;
@@ -23,7 +23,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FundingFeesResolver implements FieldResolver {
 
-    private final NexusEngineConfig config;
+    private final ConfigHolder config;
 
     @Override
     public String name() {

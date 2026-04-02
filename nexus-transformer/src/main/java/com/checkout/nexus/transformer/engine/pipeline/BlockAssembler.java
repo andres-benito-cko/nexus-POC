@@ -1,7 +1,7 @@
 package com.checkout.nexus.transformer.engine.pipeline;
 
 import com.checkout.nexus.transformer.engine.config.FieldMapping;
-import com.checkout.nexus.transformer.engine.config.NexusEngineConfig;
+import com.checkout.nexus.transformer.engine.config.ConfigHolder;
 import com.checkout.nexus.transformer.engine.context.LeContext;
 import com.checkout.nexus.transformer.engine.expression.ExpressionEvaluator;
 import com.checkout.nexus.transformer.model.*;
@@ -22,7 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class BlockAssembler {
 
-    private final NexusEngineConfig config;
+    private final ConfigHolder config;
     private final ExpressionEvaluator evaluator;
     private final LegAssembler legAssembler;
 
