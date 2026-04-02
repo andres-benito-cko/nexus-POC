@@ -166,10 +166,12 @@ version: '3.8'
 services:
   zookeeper:
     image: public.ecr.aws/bitnami/zookeeper:3.8
+    restart: unless-stopped
     environment:
       ALLOW_ANONYMOUS_LOGIN: "yes"
   kafka:
     image: public.ecr.aws/bitnami/kafka:3.5
+    restart: unless-stopped
     environment:
       ALLOW_PLAINTEXT_LISTENER: "yes"
       KAFKA_CFG_ZOOKEEPER_CONNECT: "zookeeper:2181"
@@ -180,6 +182,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://${INFRA_IP}:9092"
   postgres:
     image: public.ecr.aws/docker/library/postgres:15
+    restart: unless-stopped
 `),
       'cd /home/ec2-user/nexus-POC',
       'sudo -u ec2-user docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d zookeeper kafka postgres',
@@ -208,10 +211,12 @@ services:
 version: '3.8'
 services:
   nexus-api:
+    restart: unless-stopped
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: "${INFRA_IP}:9092"
       SPRING_DATASOURCE_URL: "jdbc:postgresql://${INFRA_IP}:5432/nexus"
   nexus-transformer:
+    restart: unless-stopped
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: "${INFRA_IP}:9092"
 `),
@@ -243,9 +248,11 @@ services:
 version: '3.8'
 services:
   le-simulator:
+    restart: unless-stopped
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: "${INFRA_IP}:9092"
   rules-engine:
+    restart: unless-stopped
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: "${INFRA_IP}:9092"
       SPRING_DATASOURCE_URL: "jdbc:postgresql://${INFRA_IP}:5432/nexus"
@@ -256,8 +263,30 @@ services:
       'cd /home/ec2-user/nexus-POC',
       waitForPort(INFRA_IP, 9092),
       'sudo -u ec2-user docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build -d --no-deps le-simulator rules-engine',
-      // UI: serve pre-built dist/ via zero-dep Node.js proxy server (npm registry is blocked)
-      `sudo -u ec2-user bash -c 'VITE_BACKEND_URL=http://${API_IP}:8083 VITE_SIMULATOR_URL=http://${WORKERS_IP}:8081 nohup node /home/ec2-user/nexus-POC/ui/server.cjs > /home/ec2-user/vite.log 2>&1 &'`,
+      // UI: systemd service so it restarts on crash or instance reboot
+      // (npm registry is blocked, so server.cjs uses pre-built dist/ with no npm deps)
+      `cat > /etc/systemd/system/nexus-ui.service << 'EOF'
+[Unit]
+Description=Nexus UI Server
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+Environment="VITE_BACKEND_URL=http://${API_IP}:8083"
+Environment="VITE_SIMULATOR_URL=http://${WORKERS_IP}:8081"
+ExecStart=/usr/bin/node /home/ec2-user/nexus-POC/ui/server.cjs
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/ec2-user/vite.log
+StandardError=append:/home/ec2-user/vite.log
+
+[Install]
+WantedBy=multi-user.target
+EOF`,
+      'systemctl daemon-reload',
+      'systemctl enable nexus-ui',
+      'systemctl start nexus-ui',
     );
 
     const workersInstance = new ec2.Instance(this, 'WorkersInstance', {

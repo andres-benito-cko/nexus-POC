@@ -14,6 +14,8 @@ Three EC2 `t3.medium` instances in a private subnet (`subnet-0076d4d589390d99d`,
 
 Container orchestration: docker-compose v1 (installed via pip in a venv at `/opt/dc-venv`).
 
+All docker-compose services run with `restart: unless-stopped` so they survive Docker daemon restarts and instance reboots. The UI Node.js server runs as a systemd service (`nexus-ui.service`) for the same reason.
+
 ## Prerequisites
 
 ### 1. AWS auth (Okta)
@@ -121,12 +123,12 @@ git push
 ```bash
 make deploy
 ```
-The Makefile extracts `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` from the `cko-financial-infrastructure-tooling-qa-OktaIDP-breakglass` profile and passes them as env vars to CDK. This is required because `npx cdk` does not inherit `--profile` into subprocess credential resolution.
+The Makefile extracts `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` from the `cko-financial-infrastructure-tooling-qa-OktaIDP-breakglass` profile and passes them as env vars to CDK. This is required because `npx cdk` does not propagate `--profile` into the subprocess that does CloudFormation calls and asset uploads.
 
 The stack takes ~3 minutes. Each instance bootstraps in parallel:
-- **Infra**: installs Docker, clones repo, pulls bitnami/zookeeper + bitnami/kafka + postgres from ECR Public, starts containers.
-- **API**: same setup, waits for `kafka:9092` to be reachable, starts nexus-api + nexus-transformer.
-- **Workers**: same setup, waits for `kafka:9092`, starts le-simulator + rules-engine, then starts `node ui/server.cjs`.
+- **Infra**: installs Docker, clones repo, pulls bitnami/zookeeper + bitnami/kafka + postgres from ECR Public, starts containers with `restart: unless-stopped`.
+- **API**: same setup, waits for `kafka:9092` to be reachable, starts nexus-api + nexus-transformer with `restart: unless-stopped`.
+- **Workers**: same setup, waits for `kafka:9092`, starts le-simulator + rules-engine with `restart: unless-stopped`, then installs and starts `nexus-ui.service` (systemd) to serve the pre-built UI.
 
 Monitor progress via SSM (separate terminal windows):
 ```bash
@@ -151,7 +153,7 @@ make redeploy-workers  # git pull + rebuild le-simulator + rules-engine
 ```bash
 # 1. Rebuild dist/ locally (Step 2 above)
 # 2. git add + commit + push
-make restart-ui        # git pull + kill old server.cjs + start new one
+make restart-ui        # git pull + restart nexus-ui systemd service
 ```
 
 ### Only docker-compose override needs changing
@@ -204,6 +206,31 @@ The stack creates the following resources for the internal URL:
 
 The pattern mirrors `engineering-team-metrics` in the `cko-card-processing` account.
 
+## UI Server
+
+The UI is served by `ui/server.cjs` — a zero-dependency Node.js HTTP server that:
+- Serves pre-built static files from `ui/dist/` with SPA fallback to `index.html`
+- Proxies `GET|POST /api/*` to nexus-api at `VITE_BACKEND_URL` (strips `/api` prefix)
+- Proxies `/simulate/*` to le-simulator at `VITE_SIMULATOR_URL`
+- Proxies WebSocket upgrades on `/ws` to nexus-api
+
+Named `.cjs` because `ui/package.json` has `"type": "module"`.
+
+On EC2 it runs as a systemd service (`/etc/systemd/system/nexus-ui.service`) so it restarts on crash or reboot. Useful commands:
+```bash
+systemctl status nexus-ui
+journalctl -u nexus-ui -f    # live logs (also mirrored to ~/vite.log)
+systemctl restart nexus-ui
+```
+
+The WebSocket hooks use `wss://` when the page is loaded over HTTPS (the internal URL) and `ws://` for plain HTTP (tunnel fallback). This is handled in `ui/src/hooks/useWebSocket.ts` and `useManualWebSocket.ts`.
+
+## Fresh Stack Behaviour Notes
+
+- **`/api/configs/active` returns 404 on first boot** — this is expected. No engine config has been activated yet. Use the UI Config page to create and activate one.
+- **Kafka connection WARNs in nexus-api/nexus-transformer logs** — these appear transiently while Kafka is starting. The services reconnect automatically; WARNs stop within ~60 seconds.
+- **rules-engine crash-loops until postgres is ready** — it retries via `restart: unless-stopped` and stabilises once Flyway migrations complete.
+
 ## Docker Images Used
 
 All images pulled from `public.ecr.aws` (Docker Hub is blocked):
@@ -230,7 +257,7 @@ kafka:
 ```
 
 ### Flyway conflict between nexus-api and rules-engine
-Both services share the `nexus` postgres database. nexus-api creates `flyway_schema_history` with its own V1 migration. rules-engine has its own independent V1–V11 migrations. Without intervention, rules-engine fails with `Found non-empty schema but no schema history table`. Fix: give rules-engine its own Flyway table and baseline at V0 so all its migrations run fresh:
+Both services share the `nexus` postgres database. nexus-api creates `flyway_schema_history` with its own V1 migration. rules-engine has its own independent V1-V11 migrations. Without intervention, rules-engine fails with `Found non-empty schema but no schema history table`. Fix: give rules-engine its own Flyway table and baseline at V0 so all its migrations run fresh:
 ```yaml
 rules-engine:
   environment:
@@ -256,6 +283,15 @@ sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull
 
 ### IMDSv2 SCP and LaunchTemplate
 The `DenyIMDSv1` SCP condition key (`ec2:MetadataHttpTokens`) is only present in the RunInstances API call when specified via a LaunchTemplate. The CDK stack creates a `CfnLaunchTemplate` with `httpTokens: required` and attaches it to each instance via `cfnInstance.launchTemplate`. Setting `cfnInstance.metadataOptions` directly does NOT satisfy the SCP because CloudFormation applies it via `ModifyInstanceMetadataOptions` post-creation.
+
+### CDK deploy credential resolution
+`npx cdk deploy --profile <name>` does not propagate the profile into the subprocess that uploads assets to S3 and calls CloudFormation. This manifests as "Need to perform AWS calls for account X, but no credentials have been configured" even when the profile is valid. The `make deploy` target works around this by extracting credentials from the profile and passing them as `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_SESSION_TOKEN` env vars.
+
+### EC2 security group descriptions — ASCII only
+`GroupDescription` and SecurityGroupIngress `Description` fields only accept `a-zA-Z0-9. _-:/()#,@[]+=&;{}!$*`. Unicode characters (em-dash, arrows, etc.) cause a 400 `InvalidRequest` from the EC2 API.
+
+### WebSocket mixed-content over HTTPS
+The UI WebSocket hooks (`useWebSocket.ts`, `useManualWebSocket.ts`) detect `window.location.protocol` and use `wss://` when the page is loaded over HTTPS. The ALB terminates TLS and forwards plain WebSocket to port 5173 on the Workers instance — the server.cjs proxy handles upgrades transparently.
 
 ## Destroy
 ```bash

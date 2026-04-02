@@ -139,4 +139,4 @@ restart-ui:
 	  --region $(AWS_REGION) \
 	  --profile $(AWS_PROFILE) \
 	  --document-name AWS-StartNonInteractiveCommand \
-	  --parameters '{"command":["sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull && pkill -f server.cjs; sudo -u ec2-user bash -c \"VITE_BACKEND_URL=http://10.144.177.20:8083 VITE_SIMULATOR_URL=http://10.144.177.30:8081 nohup node /home/ec2-user/nexus-POC/ui/server.cjs > /home/ec2-user/vite.log 2>&1 &\""]}'
+	  --parameters '{"command":["sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull && systemctl restart nexus-ui"]}'
