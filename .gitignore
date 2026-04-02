@@ -3,7 +3,6 @@ build/
 .gradle/
 out/
 node_modules/
-dist/
 .next/
 
 # IDE

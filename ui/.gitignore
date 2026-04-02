@@ -1,5 +1,5 @@
 node_modules/
-dist/
+# dist/ committed — pre-built for air-gapped EC2 (no npm registry access)
 test-results/
 playwright-report/
 *.local
