@@ -1,142 +1,239 @@
-# Nexus POC — Deployment
+# Nexus POC — Deployment Guide
 
-## Docker Compose Setup
+> **For AI agents:** This doc is the authoritative redeployment reference. Read it fully before touching the stack.
 
-All infrastructure and backend services are defined in `docker-compose.yml` at the repo root:
+## Architecture
 
-```yaml
-version: '3.8'
-services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-    ports: ["2181:2181"]
+Three EC2 `t3.medium` instances in a private subnet (`subnet-0076d4d589390d99d`, `10.144.177.0/26`, `eu-west-1a`) inside VPC `vpc-06b9709ddf6203ec2` (account `591127500072`).
 
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    depends_on: [zookeeper]
-    ports: ["9092:9092"]
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+| Instance | Fixed IP | Services |
+|---|---|---|
+| InfraInstance | `10.144.177.10` | zookeeper, kafka, postgres |
+| ApiInstance | `10.144.177.20` | nexus-api (8083), nexus-transformer (8082) |
+| WorkersInstance | `10.144.177.30` | le-simulator (8081), rules-engine (8080), UI (5173) |
 
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: nexus
-      POSTGRES_USER: nexus
-      POSTGRES_PASSWORD: nexus
-    ports: ["5432:5432"]
-    volumes: ["postgres_data:/var/lib/postgresql/data"]
+Container orchestration: docker-compose v1 (installed via pip in a venv at `/opt/dc-venv`).
 
-  le-simulator:
-    build: ./le-simulator
-    depends_on: [kafka]
-    restart: on-failure
-    ports: ["8081:8081"]
-    environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      SERVER_PORT: 8081
+## Prerequisites
 
-  nexus-api:
-    build: ./nexus-api
-    depends_on: [kafka, postgres]
-    restart: on-failure
-    ports: ["8083:8083"]
-    environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nexus
-      SPRING_DATASOURCE_USERNAME: nexus
-      SPRING_DATASOURCE_PASSWORD: nexus
-      NEXUS_TRANSFORMER_URL: http://nexus-transformer:8082
-      SERVER_PORT: 8083
+### 1. AWS auth (Okta)
+```bash
+okta-aws-cli \
+  --org-domain checkout.okta.com \
+  --oidc-client-id 0oar3nsvk7VtIvsL3357 \
+  --aws-acct-fed-app-id 0oaricq7oliS1Yb8G357 \
+  -p cko-financial-infrastructure-tooling-qa-OktaIDP-breakglass \
+  --write-aws-credentials
+```
+`--write-aws-credentials` is required — without it credentials go to stdout only.
+Session lasts ~1 hour; re-run when you see `ExpiredTokenException`.
 
-  nexus-transformer:
-    build: ./nexus-transformer
-    depends_on: [kafka, nexus-api]
-    restart: on-failure
-    ports: ["8082:8082"]
-    environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      NEXUS_API_URL: http://nexus-api:8083
-      SERVER_PORT: 8082
-
-  rules-engine:
-    build: ./rules-engine
-    depends_on: [kafka, postgres]
-    restart: on-failure
-    ports: ["8080:8080"]
-    environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nexus
-      SPRING_DATASOURCE_USERNAME: nexus
-      SPRING_DATASOURCE_PASSWORD: nexus
-      SERVER_PORT: 8080
-
-volumes:
-  postgres_data:
+### 2. SSM Session Manager plugin
+Required for `make tunnel`. Install once:
+```bash
+curl -sL "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/mac_arm64/session-manager-plugin.pkg" -o /tmp/smp.pkg
+sudo installer -pkg /tmp/smp.pkg -target /
+sudo ln -sf /usr/local/sessionmanagerplugin/bin/session-manager-plugin /usr/local/bin/session-manager-plugin
 ```
 
-## Port Mapping
-
-| Service | Port | Purpose |
-|---|---|---|
-| Zookeeper | 2181 | Kafka coordination |
-| Kafka | 9092 | Message broker |
-| PostgreSQL | 5432 | Database |
-| LE Simulator | 8081 | Simulator REST API |
-| Nexus Transformer | 8082 | Transaction query API |
-| Nexus API | 8083 | BFF for UI |
-| Rules Engine | 8080 | Rules CRUD, ledger, WebSocket |
-
-## Startup Instructions
-
-**1. Build all Java services:**
-
+### 3. CDK bootstrap (once per account/region)
 ```bash
+make bootstrap-cdk
+```
+This strips ECR resources from the bootstrap template (the org SCP blocks `ecr:CreateRepository`).
+
+### 4. GitHub token in Secrets Manager (once)
+```bash
+make store-github-token TOKEN=ghp_xxxx
+```
+Stored at `nexus-poc/github-token`. The instances fetch it at boot to clone the repo.
+
+> **IMPORTANT:** The token in use was exposed in instance logs. Rotate the GitHub PAT and run `make store-github-token TOKEN=<new_token>` before redeploying.
+
+## Firewall / Network Constraints
+
+The Cloud WAN firewall blocks most external traffic. **Allowed outbound:**
+- `github.com` — repo clone
+- `pypi.org` — docker-compose pip install
+- `public.ecr.aws` — Docker image pulls
+- AWS service endpoints (SSM, Secrets Manager, S3 for CDK assets)
+
+**Blocked:**
+- `registry-1.docker.io` (Docker Hub) — use `public.ecr.aws/docker/library/*` mirrors
+- `plugins.gradle.org`, `repo1.maven.org` — Gradle/Maven cannot download plugins or deps
+- `registry.npmjs.org` — npm cannot install packages
+
+### Consequence: all artifacts must be pre-built locally
+
+| Artifact | Source | Where committed |
+|---|---|---|
+| Java JARs | `./gradlew bootJar` via local Docker | `{service}/build/libs/*.jar` |
+| React UI | `npm run build` locally | `ui/dist/` |
+| Docker images | ECR Public mirrors only | referenced in `docker-compose.override.yml` |
+
+## SCP Constraints
+
+Policy `p-n94gdmkj` (`qa-Restrictions`) in `cko-core-platform/multi-account-org-policies/terraform/200-scp/policies/ou/qa/Restrictions.tf.json`:
+
+- **DenyIMDSv1**: `ec2:RunInstances` requires `ec2:MetadataHttpTokens = "required"`. Must be set via a `CfnLaunchTemplate` — setting it on `CfnInstance.metadataOptions` does NOT work (CloudFormation uses `ModifyInstanceMetadataOptions` post-creation, which bypasses the SCP condition key).
+- **DenyUnencryptedVolumes**: all EBS volumes must be encrypted.
+- **RequireSmallInstanceType**: only `t3.medium` and smaller are allowed for this account.
+- **DenyNetworking**: blocks VPC/subnet creation for non-networking roles — cannot add public subnets, IGW, or ALB.
+
+## Full Deploy (fresh stack)
+
+### Step 1 — Pre-build Java JARs (if any Java service changed)
+Requires Docker running locally. Uses the `gradle:8.7-jdk17` image — no local JDK needed.
+```bash
+cd Projects/nexus-POC
 for svc in le-simulator nexus-transformer nexus-api rules-engine; do
-  (cd $svc && ./gradlew build -x test)
+  docker run --rm \
+    -v "$(pwd)/$svc:/app" \
+    -w /app \
+    gradle:8.7-jdk17 \
+    gradle bootJar --no-daemon -x test -q
 done
+git add -f le-simulator/build/libs/le-simulator-0.0.1-SNAPSHOT.jar \
+           nexus-transformer/build/libs/nexus-transformer-0.0.1-SNAPSHOT.jar \
+           nexus-api/build/libs/nexus-api-0.0.1-SNAPSHOT.jar \
+           rules-engine/build/libs/rules-engine-0.0.1-SNAPSHOT.jar
 ```
 
-**2. Start infrastructure and services:**
-
+### Step 2 — Pre-build UI (if UI changed)
+Requires Node.js locally.
 ```bash
-docker compose up --build
+cd ui
+rm -rf node_modules && npm install
+VITE_BACKEND_URL=http://10.144.177.20:8083 \
+VITE_SIMULATOR_URL=http://10.144.177.30:8081 \
+npm run build
+cd ..
+git add ui/dist
 ```
 
-This starts Zookeeper, Kafka, PostgreSQL, and all 4 Java services. Flyway migrations run automatically on first startup.
-
-**3. Start the UI dev server:**
-
+### Step 3 — Commit and push
 ```bash
-cd ui && npm install && npm run dev
+git commit -m "chore: rebuild artifacts"
+git push
 ```
 
-The UI is available at `http://localhost:5173`.
+### Step 4 — Deploy CDK stack
+```bash
+make deploy
+```
 
-**Startup order:** Docker Compose handles dependency ordering. `nexus-transformer` waits for `nexus-api`; all services use `restart: on-failure` to handle transient startup races with Kafka.
+The stack takes ~3 minutes. Each instance bootstraps in parallel:
+- **Infra**: installs Docker, clones repo, pulls bitnami/zookeeper + bitnami/kafka + postgres from ECR Public, starts containers.
+- **API**: same setup, waits for `kafka:9092` to be reachable, starts nexus-api + nexus-transformer.
+- **Workers**: same setup, waits for `kafka:9092`, starts le-simulator + rules-engine, then starts `node ui/server.cjs`.
 
-## AWS Deployment Path
+Monitor progress via SSM (separate terminal windows):
+```bash
+make logs-infra    # tail /var/log/nexus-poc-infra.log
+make logs-api      # tail /var/log/nexus-poc-api.log
+make logs-workers  # tail /var/log/nexus-poc-workers.log
+```
 
-Note: production deployment is out of scope for the POC. The architecture is AWS-ready; this table documents the intended mapping for a future production deployment.
+## Partial Redeploy (running stack)
 
-| POC Component | AWS Service | Notes |
-|---|---|---|
-| LE Simulator | ECS/Fargate task | Single task; internal ALB |
-| Nexus Transformer | ECS/Fargate service | Auto-scaling on consumer lag |
-| Rules Engine (BFF) | ECS/Fargate service | Public ALB; WebSocket support |
-| Nexus API | ECS/Fargate service | Internal ALB |
-| Kafka | Amazon MSK | 3 brokers, 3 AZs, IAM auth |
-| PostgreSQL | Amazon RDS | Multi-AZ; db.t3.medium |
-| UI | S3 + CloudFront | Static hosting |
-| Networking | VPC + private subnets | ALB in public subnet |
-| Secrets | AWS Secrets Manager | DB credentials, Kafka auth |
-| Logging | CloudWatch Logs | Container logs aggregated |
+> **Note:** `git pull` must always run as `ec2-user` (not root). The Makefile targets handle this correctly.
+
+### Java services changed
+```bash
+# 1. Rebuild JARs locally (Step 1 above)
+# 2. git add -f + commit + push
+make redeploy-api      # git pull + rebuild nexus-api + nexus-transformer
+make redeploy-workers  # git pull + rebuild le-simulator + rules-engine
+```
+
+### UI changed
+```bash
+# 1. Rebuild dist/ locally (Step 2 above)
+# 2. git add + commit + push
+make restart-ui        # git pull + kill old server.cjs + start new one
+```
+
+### Only docker-compose override needs changing
+Connect to the instance and rewrite the override file directly, then `docker-compose up -d`:
+```bash
+make connect-workers   # SSM interactive session
+# edit /home/ec2-user/nexus-POC/docker-compose.override.yml
+# then:
+sudo -u ec2-user docker-compose \
+  -f /home/ec2-user/nexus-POC/docker-compose.yml \
+  -f /home/ec2-user/nexus-POC/docker-compose.override.yml \
+  --project-directory /home/ec2-user/nexus-POC \
+  up -d --no-deps <service>
+```
+
+## Access the UI
+
+### Via SSM tunnel (always works, requires SSM plugin)
+```bash
+make tunnel   # forwards WorkersInstance:5173 → localhost:5173
+# then open http://localhost:5173
+```
+
+### Via corporate VPN / Cloud WAN
+If on the Checkout corporate network, the VPC is routed via Cloud WAN:
+```
+http://10.144.177.30:5173
+```
+
+## Docker Images Used
+
+All images pulled from `public.ecr.aws` (Docker Hub is blocked):
+
+| Service | Image |
+|---|---|
+| zookeeper | `public.ecr.aws/bitnami/zookeeper:3.8` |
+| kafka | `public.ecr.aws/bitnami/kafka:3.5` |
+| postgres | `public.ecr.aws/docker/library/postgres:15` |
+| nexus-api | built from `public.ecr.aws/docker/library/eclipse-temurin:17-jre` |
+| nexus-transformer | built from `public.ecr.aws/docker/library/eclipse-temurin:17-jre` |
+| rules-engine | built from `public.ecr.aws/docker/library/eclipse-temurin:17-jre` |
+| le-simulator | built from `public.ecr.aws/docker/library/eclipse-temurin:17-jre` |
+
+## Known Issues and Fixes
+
+### bitnami/kafka advertised listeners
+bitnami/kafka reads `KAFKA_ADVERTISED_LISTENERS` (Confluent-style, without `CFG_`) from the environment in addition to `KAFKA_CFG_ADVERTISED_LISTENERS`. The base `docker-compose.yml` sets `KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092`. Docker-compose env maps **merge** on override — so the infra override must explicitly override `KAFKA_ADVERTISED_LISTENERS` (not just add the CFG_ variant):
+```yaml
+kafka:
+  environment:
+    KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://10.144.177.10:9092"
+    KAFKA_CFG_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://10.144.177.10:9092"
+```
+
+### Flyway conflict between nexus-api and rules-engine
+Both services share the `nexus` postgres database. nexus-api creates `flyway_schema_history` with its own V1 migration. rules-engine has its own independent V1–V11 migrations. Without intervention, rules-engine fails with `Found non-empty schema but no schema history table`. Fix: give rules-engine its own Flyway table and baseline at V0 so all its migrations run fresh:
+```yaml
+rules-engine:
+  environment:
+    SPRING_FLYWAY_TABLE: "rules_engine_schema_history"
+    SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+    SPRING_FLYWAY_BASELINE_VERSION: "0"
+```
+
+### docker-compose v1 dependency pinning
+docker-compose v1 (via pip) requires exact versions:
+```
+docker>=5.0.3,<6    # v6 removed requests-unixsocket; v7 removed ssl_version kwarg
+requests-unixsocket # needed for http+docker:// scheme
+requests<2.28       # 2.28+ rejects http+docker:// scheme
+```
+Installed in `/opt/dc-venv`. `docker-compose` symlinked to `/usr/local/bin/docker-compose`.
+
+### Git ownership error in SSM `send-command`
+SSM `send-command` runs as root. `git` refuses to operate on a repo owned by `ec2-user`. Always use:
+```bash
+sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull
+```
+
+### IMDSv2 SCP and LaunchTemplate
+The `DenyIMDSv1` SCP condition key (`ec2:MetadataHttpTokens`) is only present in the RunInstances API call when specified via a LaunchTemplate. The CDK stack creates a `CfnLaunchTemplate` with `httpTokens: required` and attaches it to each instance via `cfnInstance.launchTemplate`. Setting `cfnInstance.metadataOptions` directly does NOT satisfy the SCP because CloudFormation applies it via `ModifyInstanceMetadataOptions` post-creation.
+
+## Destroy
+```bash
+make destroy
+```

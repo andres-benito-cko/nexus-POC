@@ -1,28 +1,22 @@
-.PHONY: bootstrap-cdk deploy destroy connect logs redeploy store-github-token
+.PHONY: bootstrap-cdk deploy destroy connect-infra connect-api connect-workers logs-infra logs-api logs-workers redeploy-api redeploy-workers restart-ui store-github-token tunnel
 
 AWS_PROFILE  ?= cko-financial-infrastructure-tooling-qa-OktaIDP-breakglass
 AWS_REGION   ?= eu-west-1
 STACK_NAME   ?= NexusPocStack
 
-# Retrieve the instance ID from the deployed stack
-INSTANCE_ID  = $(shell aws cloudformation describe-stacks \
-                  --stack-name $(STACK_NAME) \
-                  --profile $(AWS_PROFILE) \
-                  --region $(AWS_REGION) \
-                  --query 'Stacks[0].Outputs[?OutputKey==`InstanceId`].OutputValue' \
-                  --output text 2>/dev/null)
+_output = $(shell aws cloudformation describe-stacks \
+            --stack-name $(STACK_NAME) \
+            --profile $(AWS_PROFILE) \
+            --region $(AWS_REGION) \
+            --query "Stacks[0].Outputs[?OutputKey==\`$(1)\`].OutputValue" \
+            --output text 2>/dev/null)
 
-PUBLIC_IP    = $(shell aws cloudformation describe-stacks \
-                  --stack-name $(STACK_NAME) \
-                  --profile $(AWS_PROFILE) \
-                  --region $(AWS_REGION) \
-                  --query 'Stacks[0].Outputs[?OutputKey==`PublicIp`].OutputValue' \
-                  --output text 2>/dev/null)
+INFRA_INSTANCE_ID   = $(call _output,InfraInstanceId)
+API_INSTANCE_ID     = $(call _output,ApiInstanceId)
+WORKERS_INSTANCE_ID = $(call _output,WorkersInstanceId)
 
 # --- One-time setup -----------------------------------------------------------
 
-# Store your GitHub PAT in Secrets Manager (run once before bootstrap-cdk)
-# Usage: make store-github-token TOKEN=ghp_xxxx
 store-github-token:
 	aws secretsmanager create-secret \
 	  --name nexus-poc/github-token \
@@ -30,10 +24,8 @@ store-github-token:
 	  --region $(AWS_REGION) \
 	  --profile $(AWS_PROFILE)
 
-# Bootstrap CDK in the account (run once). Uses a custom template to avoid
-# creating an ECR repo — ecr:CreateRepository is blocked by org SCP.
 bootstrap-cdk:
-	cd cdk && npm ci
+	cd cdk && npm install
 	cd cdk && npx cdk bootstrap --show-template > bootstrap-template.yml
 	python3 scripts/strip-ecr-from-bootstrap.py cdk/bootstrap-template.yml
 	cd cdk && npx cdk bootstrap \
@@ -44,43 +36,97 @@ bootstrap-cdk:
 # --- Deployment ---------------------------------------------------------------
 
 deploy:
-	cd cdk && npm ci
-	cd cdk && npx cdk deploy \
+	cd cdk && npm install
+	CDK_DEFAULT_ACCOUNT=591127500072 npm_config_cache=$(TMPDIR)/npm-cache \
+	  npx --prefix cdk cdk deploy \
 	  --profile $(AWS_PROFILE) \
 	  --require-approval never
 
 destroy:
-	cd cdk && npx cdk destroy \
+	CDK_DEFAULT_ACCOUNT=591127500072 npm_config_cache=$(TMPDIR)/npm-cache \
+	  npx --prefix cdk cdk destroy \
 	  --profile $(AWS_PROFILE) \
 	  --force
 
-# --- Operations ---------------------------------------------------------------
+# --- Connect ------------------------------------------------------------------
 
-# Open a shell on the EC2 instance (no SSH key needed — uses SSM)
-connect:
+connect-infra:
 	aws ssm start-session \
-	  --target $(INSTANCE_ID) \
+	  --target $(INFRA_INSTANCE_ID) \
 	  --region $(AWS_REGION) \
 	  --profile $(AWS_PROFILE)
 
-# Watch the startup init log (run right after deploy)
-logs:
+connect-api:
 	aws ssm start-session \
-	  --target $(INSTANCE_ID) \
+	  --target $(API_INSTANCE_ID) \
+	  --region $(AWS_REGION) \
+	  --profile $(AWS_PROFILE)
+
+connect-workers:
+	aws ssm start-session \
+	  --target $(WORKERS_INSTANCE_ID) \
+	  --region $(AWS_REGION) \
+	  --profile $(AWS_PROFILE)
+
+# --- Logs ---------------------------------------------------------------------
+
+logs-infra:
+	aws ssm start-session \
+	  --target $(INFRA_INSTANCE_ID) \
 	  --region $(AWS_REGION) \
 	  --profile $(AWS_PROFILE) \
 	  --document-name AWS-StartNonInteractiveCommand \
-	  --parameters '{"command":["tail -f /var/log/nexus-poc-init.log"]}'
+	  --parameters '{"command":["tail -f /var/log/nexus-poc-infra.log"]}'
 
-# Pull latest code and restart services (no CDK redeploy needed)
-redeploy:
+logs-api:
 	aws ssm start-session \
-	  --target $(INSTANCE_ID) \
+	  --target $(API_INSTANCE_ID) \
 	  --region $(AWS_REGION) \
 	  --profile $(AWS_PROFILE) \
 	  --document-name AWS-StartNonInteractiveCommand \
-	  --parameters '{"command":["cd /home/ec2-user/nexus-POC && git pull && docker compose -f docker-compose.yml -f docker-compose.aws.yml up --build -d"]}'
+	  --parameters '{"command":["tail -f /var/log/nexus-poc-api.log"]}'
 
-# Print the UI URL
-url:
-	@echo "http://$(PUBLIC_IP):5173"
+logs-workers:
+	aws ssm start-session \
+	  --target $(WORKERS_INSTANCE_ID) \
+	  --region $(AWS_REGION) \
+	  --profile $(AWS_PROFILE) \
+	  --document-name AWS-StartNonInteractiveCommand \
+	  --parameters '{"command":["tail -f /var/log/nexus-poc-workers.log"]}'
+
+# --- Tunnel -------------------------------------------------------------------
+
+# Forward UI port to localhost:5173 via SSM; then open http://localhost:5173
+tunnel:
+	aws ssm start-session \
+	  --target $(WORKERS_INSTANCE_ID) \
+	  --region $(AWS_REGION) \
+	  --profile $(AWS_PROFILE) \
+	  --document-name AWS-StartPortForwardingSession \
+	  --parameters '{"portNumber":["5173"],"localPortNumber":["5173"]}'
+
+# --- Redeploy (no CDK) --------------------------------------------------------
+
+redeploy-api:
+	aws ssm start-session \
+	  --target $(API_INSTANCE_ID) \
+	  --region $(AWS_REGION) \
+	  --profile $(AWS_PROFILE) \
+	  --document-name AWS-StartNonInteractiveCommand \
+	  --parameters '{"command":["sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull && sudo -u ec2-user docker-compose -f /home/ec2-user/nexus-POC/docker-compose.yml -f /home/ec2-user/nexus-POC/docker-compose.override.yml --project-directory /home/ec2-user/nexus-POC up --build -d --no-deps nexus-api nexus-transformer"]}'
+
+redeploy-workers:
+	aws ssm start-session \
+	  --target $(WORKERS_INSTANCE_ID) \
+	  --region $(AWS_REGION) \
+	  --profile $(AWS_PROFILE) \
+	  --document-name AWS-StartNonInteractiveCommand \
+	  --parameters '{"command":["sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull && sudo -u ec2-user docker-compose -f /home/ec2-user/nexus-POC/docker-compose.yml -f /home/ec2-user/nexus-POC/docker-compose.override.yml --project-directory /home/ec2-user/nexus-POC up --build -d --no-deps le-simulator rules-engine"]}'
+
+restart-ui:
+	aws ssm start-session \
+	  --target $(WORKERS_INSTANCE_ID) \
+	  --region $(AWS_REGION) \
+	  --profile $(AWS_PROFILE) \
+	  --document-name AWS-StartNonInteractiveCommand \
+	  --parameters '{"command":["sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull && pkill -f server.cjs; sudo -u ec2-user bash -c \"VITE_BACKEND_URL=http://10.144.177.20:8083 VITE_SIMULATOR_URL=http://10.144.177.30:8081 nohup node /home/ec2-user/nexus-POC/ui/server.cjs > /home/ec2-user/vite.log 2>&1 &\""]}'
