@@ -313,3 +313,73 @@ export async function getBlockSource(nexusId: string): Promise<string> {
   if (!res.ok) throw new Error(`Rules Engine ${res.status}: ${res.statusText}`)
   return res.text()
 }
+
+// --- AI Generator ---
+
+export interface GenerateProgress {
+  step: string
+  message: string
+}
+
+export interface GenerateResult {
+  success: boolean
+  leTransaction?: Record<string, unknown>
+  validationPassed?: boolean
+  errors?: string[]
+}
+
+export async function generateLeTransaction(
+  prompt: string,
+  onProgress: (event: GenerateProgress) => void
+): Promise<GenerateResult> {
+  const res = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  })
+
+  if (!res.ok) {
+    throw new Error(`Generator ${res.status}: ${res.statusText}`)
+  }
+
+  const reader = res.body?.getReader()
+  if (!reader) throw new Error('No response body')
+
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let finalResult: GenerateResult | null = null
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() ?? ''
+
+    let eventName = ''
+    for (const line of lines) {
+      if (line.startsWith('event:')) {
+        eventName = line.slice(6).trim()
+      } else if (line.startsWith('data:')) {
+        const data = line.slice(5).trim()
+        if (!data) continue
+        try {
+          const parsed = JSON.parse(data)
+          if (eventName === 'progress') {
+            onProgress(parsed as GenerateProgress)
+          } else if (eventName === 'result') {
+            finalResult = parsed as GenerateResult
+          } else if (eventName === 'error') {
+            finalResult = { success: false, errors: [parsed.message ?? 'Generation failed'] }
+          }
+        } catch {
+          // Skip non-JSON lines
+        }
+      }
+    }
+  }
+
+  if (finalResult) return finalResult
+  throw new Error('No result received from generator')
+}
