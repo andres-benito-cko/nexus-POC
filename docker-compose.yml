@@ -73,5 +73,18 @@ services:
       SPRING_DATASOURCE_PASSWORD: nexus
       SERVER_PORT: 8080
 
+  ai-generator:
+    build: ./ai-generator
+    depends_on: [nexus-transformer]
+    restart: on-failure
+    ports: ["8084:8084"]
+    environment:
+      NEXUS_TRANSFORMER_URL: http://nexus-transformer:8082
+      AWS_REGION: ${AWS_REGION:-eu-west-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      SERVER_PORT: 8084
+
 volumes:
   postgres_data:
