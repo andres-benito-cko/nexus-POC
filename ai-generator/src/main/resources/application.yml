@@ -1,0 +1,18 @@
+server:
+  port: 8084
+
+generator:
+  bedrock:
+    region: ${AWS_REGION:eu-west-1}
+    model-id: ${BEDROCK_MODEL_ID:eu.anthropic.claude-sonnet-4-20250514-v1:0}
+  transformer:
+    url: ${NEXUS_TRANSFORMER_URL:http://localhost:8082}
+  agent:
+    max-iterations: 3
+    timeout-seconds: 60
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
