@@ -54,12 +54,19 @@ public class FundingFeesResolver implements FieldResolver {
             fees.add(Fee.builder()
                     .feeId("_F" + counter++)
                     .feeType(feeType)
-                    .feeAmount(0) // Amount from changes (simplified; actual amount needs holding amount)
+                    .feeAmount(extractAmount(action))
                     .feeCurrency(extractCurrency(action))
                     .feeStatus("ACTUAL")
                     .build());
         }
         return fees;
+    }
+
+    private double extractAmount(BalancesChangedEvent.Action action) {
+        if (action.getChanges() == null) return 0;
+        if (action.getChanges().getPending() == null) return 0;
+        if (action.getChanges().getPending().getHoldingAmount() == null) return 0;
+        return action.getChanges().getPending().getHoldingAmount().getValue();
     }
 
     private String extractCurrency(BalancesChangedEvent.Action action) {

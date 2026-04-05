@@ -12,6 +12,8 @@ public class ScenarioLoader {
 
     public record ScenarioInfo(String id, String name, String description, int versionCount) {}
 
+    private record FeeEntry(String feeType, double amount, String currency) {}
+
     private static String today()     { return LocalDate.now().toString(); }
     private static String tomorrow()  { return LocalDate.now().plusDays(1).toString(); }
     private static String dayAfter()  { return LocalDate.now().plusDays(2).toString(); }
@@ -74,13 +76,14 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         v2.setCosEvents(List.of(
-            cosEvent(env, r2(amount * scheme.interchangeFeeRate()), ccy, "INTERCHANGE_FEE", true, scheme),
-            cosEvent(env, r2(amount * scheme.schemeFeeRate()),      ccy, "SCHEME_FEE",      true, scheme)
+            cosEvent(env, r2(amount * scheme.interchangeFeeRate()), ccy, "INTERCHANGE_FEE", true, scheme, null),
+            cosEvent(env, r2(amount * scheme.schemeFeeRate()),      ccy, "SCHEME_FEE",      true, scheme, null)
         ));
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         v3.setBalancesChangedEvents(List.of(balancesCapture(env, clientId, "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, tomorrow(), r2(amount * 0.02), scheme)));
+            amount, ccy, amount, ccy, tomorrow(), r2(amount * 0.02), scheme,
+            List.of(new FeeEntry("Gateway", r2(amount * 0.014), ccy)))));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, ccy, amount, ccy,
@@ -110,13 +113,14 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         v2.setCosEvents(List.of(
-            cosEvent(env, r2(amount * s.interchangeFeeRate()), ccy, "INTERCHANGE_FEE", true, s),
-            cosEvent(env, r2(amount * s.schemeFeeRate()),      ccy, "SCHEME_FEE",      true, s)
+            cosEvent(env, r2(amount * s.interchangeFeeRate()), ccy, "INTERCHANGE_FEE", true, s, null),
+            cosEvent(env, r2(amount * s.schemeFeeRate()),      ccy, "SCHEME_FEE",      true, s, null)
         ));
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         v3.setBalancesChangedEvents(List.of(balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, tomorrow(), r2(amount * 0.02), s)));
+            amount, ccy, amount, ccy, tomorrow(), r2(amount * 0.02), s,
+            List.of(new FeeEntry("Gateway", r2(amount * 0.014), ccy)))));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, ccy, amount, ccy,
@@ -144,13 +148,14 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         v2.setCosEvents(List.of(
-            cosEvent(env, r2(processingAmount * s.interchangeFeeRate()), processingCcy, "INTERCHANGE_FEE", true, s),
-            cosEvent(env, r2(processingAmount * s.schemeFeeRate()),      processingCcy, "SCHEME_FEE",      true, s)
+            cosEvent(env, r2(processingAmount * s.interchangeFeeRate()), processingCcy, "INTERCHANGE_FEE", true, s, null),
+            cosEvent(env, r2(processingAmount * s.schemeFeeRate()),      processingCcy, "SCHEME_FEE",      true, s, null)
         ));
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         v3.setBalancesChangedEvents(List.of(balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            holdingAmount, holdingCcy, processingAmount, processingCcy, tomorrow(), r2(holdingAmount * 0.02), s)));
+            holdingAmount, holdingCcy, processingAmount, processingCcy, tomorrow(), r2(holdingAmount * 0.02), s,
+            List.of(new FeeEntry("Gateway", r2(holdingAmount * 0.018), holdingCcy)))));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, processingAmount, processingCcy, processingAmount, processingCcy,
@@ -176,13 +181,14 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         v2.setCosEvents(List.of(
-            cosEvent(env, r2(amount * s.interchangeFeeRate()), ccy, "INTERCHANGE_FEE", true, s),
-            cosEvent(env, r2(amount * s.schemeFeeRate()),      ccy, "SCHEME_FEE",      true, s)
+            cosEvent(env, r2(amount * s.interchangeFeeRate()), ccy, "INTERCHANGE_FEE", true, s, null),
+            cosEvent(env, r2(amount * s.schemeFeeRate()),      ccy, "SCHEME_FEE",      true, s, null)
         ));
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         v3.setBalancesChangedEvents(List.of(balancesCapture(env, "cli_global_ltd", "CKO_DE_GMBH", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, tomorrow(), r2(amount * 0.02), s)));
+            amount, ccy, amount, ccy, tomorrow(), r2(amount * 0.02), s,
+            List.of(new FeeEntry("Gateway", r2(amount * 0.014), ccy)))));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, ccy, amount, ccy,
@@ -210,13 +216,14 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         v2.setCosEvents(List.of(
-            cosEvent(env, r2(amount * s.interchangeFeeRate()), processingCcy, "INTERCHANGE_FEE", true, s),
-            cosEvent(env, r2(amount * s.schemeFeeRate()),      processingCcy, "SCHEME_FEE",      true, s)
+            cosEvent(env, r2(amount * s.interchangeFeeRate()), processingCcy, "INTERCHANGE_FEE", true, s, null),
+            cosEvent(env, r2(amount * s.schemeFeeRate()),      processingCcy, "SCHEME_FEE",      true, s, null)
         ));
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         v3.setBalancesChangedEvents(List.of(balancesCapture(env, "cli_global_ltd", "CKO_DE_GMBH", "CKO_UK_LTD",
-            holdingAmount, holdingCcy, amount, processingCcy, tomorrow(), r2(holdingAmount * 0.02), s)));
+            holdingAmount, holdingCcy, amount, processingCcy, tomorrow(), r2(holdingAmount * 0.02), s,
+            List.of(new FeeEntry("Gateway", r2(holdingAmount * 0.018), holdingCcy)))));
 
         LeLinkedTransaction v4 = copyWithVersion(v3, 4);
         v4.setSchemeSettlementEvents(List.of(sdEvent(env, amount, processingCcy, amount, processingCcy,
@@ -242,12 +249,13 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         v2.setCosEvents(List.of(
-            cosEvent(env, r2(amount * s.schemeFeeRate()), ccy, "SCHEME_FEE", true, s)
+            cosEvent(env, r2(amount * s.schemeFeeRate()), ccy, "SCHEME_FEE", true, s, null)
         ));
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         BalancesChangedEvent bce = balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, tomorrow(), 0, s);
+            amount, ccy, amount, ccy, tomorrow(), 0, s,
+            List.of(new FeeEntry("Gateway", r2(amount * 0.002), ccy)));
         bce.getMetadata().setActionType("BALANCES_CHANGED_ACTION_TYPE_REFUND");
         bce.getMetadata().setSourceEventType("payment_refunded");
         bce.getMetadata().setEnhancedActionType("PartialRefund");
@@ -275,12 +283,12 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         v2.setCosEvents(List.of(
-            cosEvent(env, r2(amount * s.schemeFeeRate()), ccy, "SCHEME_FEE", true, s)
+            cosEvent(env, r2(amount * s.schemeFeeRate()), ccy, "SCHEME_FEE", true, s, null)
         ));
 
         LeLinkedTransaction v3 = copyWithVersion(v2, 3);
         BalancesChangedEvent bce = balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, tomorrow(), 0, s);
+            amount, ccy, amount, ccy, tomorrow(), 0, s, List.of());
         bce.getMetadata().setActionType("BALANCES_CHANGED_ACTION_TYPE_CHARGEBACK");
         bce.getMetadata().setSourceEventType("payment_chargeback");
         v3.setBalancesChangedEvents(List.of(bce));
@@ -308,7 +316,8 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         BalancesChangedEvent bce = balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, tomorrow(), 0, s);
+            amount, ccy, amount, ccy, tomorrow(), 0, s,
+            List.of(new FeeEntry("Gateway", r2(amount * 0.005), ccy)));
         bce.getMetadata().setActionType("BALANCES_CHANGED_ACTION_TYPE_CARD_PAYOUT");
         bce.getMetadata().setSourceEventType("payment_paid_out");
         v2.setBalancesChangedEvents(List.of(bce));
@@ -338,7 +347,7 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         BalancesChangedEvent bce = balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, today(), 0, s);
+            amount, ccy, amount, ccy, today(), 0, s, List.of());
         bce.getMetadata().setActionType("BALANCES_CHANGED_ACTION_TYPE_TOP_UP");
         bce.getMetadata().setSourceEventType("payment_top_up");
         v2.setBalancesChangedEvents(List.of(bce));
@@ -368,7 +377,7 @@ public class ScenarioLoader {
 
         LeLinkedTransaction v2 = copyWithVersion(v1, 2);
         BalancesChangedEvent bce = balancesCapture(env, "cli_acme_corp", "CKO_UK_LTD", "CKO_UK_LTD",
-            amount, ccy, amount, ccy, today(), 0, s);
+            amount, ccy, amount, ccy, today(), 0, s, List.of());
         bce.getMetadata().setActionType("BALANCES_CHANGED_ACTION_TYPE_CREDIT");
         v2.setBalancesChangedEvents(List.of(bce));
 
@@ -413,13 +422,14 @@ public class ScenarioLoader {
     }
 
     private CosEvent cosEvent(EventEnvelope env, double feeAmount, String currency,
-            String feeType, boolean predicted, SchemeProfile scheme) {
+            String feeType, boolean predicted, SchemeProfile scheme, String feeSubType) {
         return CosEvent.builder()
             .envelope(env)
             .payload(CosEvent.CosPayload.builder()
                 .fee(AmountValue.builder().value(feeAmount).currencyCode(currency).build())
                 .isPredicted(predicted)
                 .feeType(feeType.equals("INTERCHANGE_FEE") ? "FEE_TYPE_INTERCHANGE" : "FEE_TYPE_SCHEME")
+                .feeSubType(feeSubType)
                 .direction("increase")
                 .build())
             .metadata(CosEvent.CosMetadata.builder()
@@ -434,7 +444,8 @@ public class ScenarioLoader {
             String settlementEntity, String acquirerEntity,
             double holdingAmount, String holdingCcy,
             double processingAmount, String processingCcy,
-            String valueDate, double reserveAmount, SchemeProfile scheme) {
+            String valueDate, double reserveAmount, SchemeProfile scheme,
+            List<FeeEntry> fees) {
         BalancesChangedEvent.BalancesChanges changes = BalancesChangedEvent.BalancesChanges.builder()
             .pending(BalancesChangedEvent.PendingChange.builder()
                 .holdingAmount(AmountValue.builder().value(holdingAmount).currencyCode(holdingCcy).build())
@@ -443,6 +454,26 @@ public class ScenarioLoader {
             .build();
         if (reserveAmount > 0) {
             changes.setRollingReserve(AmountValue.builder().value(reserveAmount).currencyCode(holdingCcy).build());
+        }
+        List<BalancesChangedEvent.BalancesAction> actions = new ArrayList<>();
+        actions.add(BalancesChangedEvent.BalancesAction.builder()
+            .changes(changes)
+            .actionMetadata(BalancesChangedEvent.ActionMetadata.builder()
+                .amountType("revenue")
+                .build())
+            .build());
+        for (FeeEntry fee : fees) {
+            actions.add(BalancesChangedEvent.BalancesAction.builder()
+                .changes(BalancesChangedEvent.BalancesChanges.builder()
+                    .pending(BalancesChangedEvent.PendingChange.builder()
+                        .holdingAmount(AmountValue.builder().value(fee.amount()).currencyCode(fee.currency()).build())
+                        .build())
+                    .build())
+                .actionMetadata(BalancesChangedEvent.ActionMetadata.builder()
+                    .amountType("fee")
+                    .feeType(fee.feeType())
+                    .build())
+                .build());
         }
         return BalancesChangedEvent.builder()
             .envelope(env)
@@ -461,12 +492,7 @@ public class ScenarioLoader {
                 .clientSettlementType("Net")
                 .valueDate(valueDate)
                 .build())
-            .actions(List.of(BalancesChangedEvent.BalancesAction.builder()
-                .changes(changes)
-                .actionMetadata(BalancesChangedEvent.ActionMetadata.builder()
-                    .amountType("revenue")
-                    .build())
-                .build()))
+            .actions(actions)
             .build();
     }
 

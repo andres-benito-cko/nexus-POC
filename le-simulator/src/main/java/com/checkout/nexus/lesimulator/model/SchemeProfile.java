@@ -24,7 +24,7 @@ public record SchemeProfile(
         "VISA",        // confirmed Q10: 39M+ records
         "visa",        // confirmed Q10: 39M+ records
         "USD",         // dominant per Q4: 8.7M USD vs 7.2M GBP vs 5.7M EUR
-        0.0,           // IC not reported separately in COS (Q4: NULL for all schemes)
+        0.0055,        // Simulation rate for POC; production COS reports IC as NULL
         0.0046,        // Q4 avg_scheme_fee_pct for Visa/EUR: 0.4563% / 100
         "ISS",         // confirmed Q9: 49.01% dominant for Visa
         "GB"
@@ -35,7 +35,7 @@ public record SchemeProfile(
         "MASTERCARD",  // confirmed Q10: 29M+ records
         "mastercard",  // confirmed Q10: 29M+ records
         "EUR",         // confirmed Q7: 25.79% dominant for Mastercard
-        0.0,           // IC not reported separately in COS (Q4: NULL for all schemes)
+        0.0045,        // Simulation rate for POC; production COS reports IC as NULL
         0.0031,        // Q4 avg_scheme_fee_pct for Mastercard/EUR: 0.3094% / 100
         "EU00000008",  // confirmed Q9: 25.43% dominant for Mastercard
         "GB"
@@ -46,7 +46,7 @@ public record SchemeProfile(
         "AMEX",        // confirmed Q1c: 5.2M records
         "amex",        // confirmed Q1b: 299,859 COS records
         "USD",         // confirmed Q7: 72.63% dominant for AMEX
-        0.0,           // IC not reported separately in COS (Q4: NULL for all schemes)
+        0.0150,        // Simulation rate for POC; production COS reports IC as NULL
         0.0000,        // scheme fee not reliably derived from Q4 for AMEX sample
         "4641456538",  // confirmed Q9: 63.57% dominant for AMEX; AMEX settlement service IDs are numeric strings
         "GB"
@@ -59,7 +59,7 @@ public record SchemeProfile(
         "CARTE BANCAIRE", // confirmed Q1c: standalone form, 1,414,800 records
         "cb",             // simulation value — CB has negligible COS presence
         "EUR",
-        0.0,              // no production COS data for CB
+        0.0030,           // Simulation rate for POC; production COS reports IC as NULL
         0.0005,           // simulation estimate — CB has no production COS data
         "EU00082602",     // simulation value — CB has no SD events in production
         "FR"
@@ -71,7 +71,7 @@ public record SchemeProfile(
         "JcbDomestic",     // confirmed Q1c: dominant form with 612,254 records
         "jcb",             // confirmed Q1b: 274,998 COS records
         "JPY",
-        0.0,               // IC not reported separately in COS (Q4: NULL for all schemes)
+        0.0060,            // Simulation rate for POC; production COS reports IC as NULL
         0.0000,
         "JCN006308223",    // confirmed Q9: 100% for JCN
         "JP"
@@ -84,7 +84,7 @@ public record SchemeProfile(
         "Discover",        // confirmed Q1c: dominant form with 6,207,931 records
         "discover",        // only 238 COS records — essentially simulation value
         "USD",
-        0.0,               // no production COS data
+        0.0100,            // Simulation rate for POC; production COS reports IC as NULL
         0.0000,
         "US00000001",      // simulation value — Discover has no SD events in production (appears as DCI/Diners Club)
         "US"
