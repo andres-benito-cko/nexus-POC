@@ -1,0 +1,376 @@
+{
+  "valid_combinations": [
+    {
+      "family": "ACQUIRING",
+      "type": "AUTH",
+      "statuses": [
+        "AUTHORISED",
+        "EXPIRED",
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "ACQUIRING",
+      "type": "CAPTURE",
+      "statuses": [
+        "CAPTURED",
+        "ADVISED",
+        "SETTLED",
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "ACQUIRING",
+      "type": "REFUND",
+      "statuses": [
+        "INITIATED",
+        "SETTLED",
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "ACQUIRING",
+      "type": "CHARGEBACK",
+      "statuses": [
+        "RECEIVED",
+        "WON",
+        "LOST"
+      ]
+    },
+    {
+      "family": "ACQUIRING",
+      "type": "REVERSAL",
+      "statuses": [
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "ISSUING",
+      "type": "AUTH",
+      "statuses": [
+        "AUTHORISED",
+        "EXPIRED",
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "ISSUING",
+      "type": "CAPTURE",
+      "statuses": [
+        "CAPTURED",
+        "ADVISED",
+        "SETTLED",
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "ISSUING",
+      "type": "REFUND",
+      "statuses": [
+        "INITIATED",
+        "SETTLED",
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "ISSUING",
+      "type": "CHARGEBACK",
+      "statuses": [
+        "RECEIVED",
+        "WON",
+        "LOST"
+      ]
+    },
+    {
+      "family": "ISSUING",
+      "type": "REVERSAL",
+      "statuses": [
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "PAYOUT",
+      "type": "CREDIT",
+      "statuses": [
+        "INITIATED",
+        "SETTLED",
+        "RETURNED"
+      ]
+    },
+    {
+      "family": "PAYOUT",
+      "type": "REVERSAL",
+      "statuses": [
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "TOPUP",
+      "type": "CREDIT",
+      "statuses": [
+        "INITIATED",
+        "SETTLED",
+        "RETURNED"
+      ]
+    },
+    {
+      "family": "TOPUP",
+      "type": "REVERSAL",
+      "statuses": [
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "FX",
+      "type": "CONVERSION",
+      "statuses": [
+        "CONVERTED"
+      ]
+    },
+    {
+      "family": "APM",
+      "type": "CAPTURE",
+      "statuses": [
+        "CAPTURED",
+        "ADVISED",
+        "SETTLED",
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "APM",
+      "type": "REFUND",
+      "statuses": [
+        "INITIATED",
+        "SETTLED",
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "APM",
+      "type": "REVERSAL",
+      "statuses": [
+        "REVERSED"
+      ]
+    },
+    {
+      "family": "TRANSFER",
+      "type": "DEBIT",
+      "statuses": [
+        "SETTLED"
+      ]
+    },
+    {
+      "family": "TRANSFER",
+      "type": "CREDIT",
+      "statuses": [
+        "SETTLED"
+      ]
+    },
+    {
+      "family": "GLOBAL_PRICING",
+      "type": "MINIMUM_BILLING",
+      "statuses": [
+        "INITIATED",
+        "SETTLED"
+      ]
+    },
+    {
+      "family": "GLOBAL_PRICING",
+      "type": "TIERED_PRICING",
+      "statuses": [
+        "INITIATED",
+        "SETTLED"
+      ]
+    },
+    {
+      "family": "CASH",
+      "type": "SETTLEMENT",
+      "statuses": [
+        "INITIATED",
+        "SETTLED"
+      ]
+    },
+    {
+      "family": "CASH",
+      "type": "RECEIPT",
+      "statuses": [
+        "INITIATED",
+        "SETTLED"
+      ]
+    },
+    {
+      "family": "CASH",
+      "type": "PAYMENT",
+      "statuses": [
+        "INITIATED",
+        "SETTLED"
+      ]
+    }
+  ],
+  "leg_composition_rules": [
+    {
+      "family": "ACQUIRING",
+      "type": "AUTH",
+      "legs": [
+        "1x AUTH_HOLD (CLIENT_ENTITY -> CKO_ENTITY)"
+      ]
+    },
+    {
+      "family": "ACQUIRING",
+      "type": "CAPTURE",
+      "legs": [
+        "1x SCHEME_SETTLEMENT (SCHEME -> CKO_ENTITY)",
+        "1x FUNDING (CKO_ENTITY -> CLIENT_ENTITY)",
+        "Cross-entity: additional TRANSFER trade (separate trade, not additional leg)"
+      ]
+    },
+    {
+      "family": "ACQUIRING",
+      "type": "REFUND",
+      "legs": [
+        "1x SCHEME_SETTLEMENT (CKO_ENTITY -> SCHEME)",
+        "1x FUNDING (CLIENT_ENTITY -> CKO_ENTITY)"
+      ]
+    },
+    {
+      "family": "ACQUIRING",
+      "type": "CHARGEBACK",
+      "legs": [
+        "1x SCHEME_SETTLEMENT (reversed direction)",
+        "1x FUNDING (reversed direction)"
+      ]
+    },
+    {
+      "family": "PAYOUT",
+      "type": "CREDIT",
+      "legs": [
+        "1x FUNDING (CKO_ENTITY -> CLIENT_ENTITY)"
+      ]
+    },
+    {
+      "family": "TOPUP",
+      "type": "CREDIT",
+      "legs": [
+        "1x FUNDING (CLIENT_ENTITY -> CKO_ENTITY)"
+      ]
+    },
+    {
+      "family": "FX",
+      "type": "CONVERSION",
+      "legs": [
+        "1x FX_CONVERSION (CKO_ENTITY -> CKO_ENTITY, different currencies)"
+      ]
+    },
+    {
+      "family": "TRANSFER",
+      "type": "DEBIT",
+      "legs": [
+        "1x ENTITY_TRANSFER (CKO_ENTITY -> CKO_ENTITY)",
+        "or 1x FUNDING (CLIENT_ENTITY -> CLIENT_ENTITY for reserve/collateral)"
+      ]
+    },
+    {
+      "family": "TRANSFER",
+      "type": "CREDIT",
+      "legs": [
+        "1x ENTITY_TRANSFER (CKO_ENTITY -> CKO_ENTITY)",
+        "or 1x FUNDING (CLIENT_ENTITY -> CLIENT_ENTITY for reserve/collateral)"
+      ]
+    },
+    {
+      "family": "CASH",
+      "type": "*",
+      "legs": [
+        "1x FUNDING"
+      ]
+    }
+  ],
+  "enums": {
+    "product_type": [
+      "ACQUIRING",
+      "ISSUING",
+      "PAYOUT",
+      "TOPUP",
+      "FX",
+      "APM",
+      "TRANSFER",
+      "GLOBAL_PRICING",
+      "CASH"
+    ],
+    "transaction_type": [
+      "AUTH",
+      "CAPTURE",
+      "REFUND",
+      "CHARGEBACK",
+      "REVERSAL",
+      "CREDIT",
+      "CONVERSION",
+      "DEBIT",
+      "MINIMUM_BILLING",
+      "TIERED_PRICING",
+      "SETTLEMENT",
+      "RECEIPT",
+      "PAYMENT"
+    ],
+    "transaction_status": [
+      "AUTHORISED",
+      "EXPIRED",
+      "REVERSED",
+      "CAPTURED",
+      "ADVISED",
+      "SETTLED",
+      "INITIATED",
+      "RECEIVED",
+      "WON",
+      "LOST",
+      "RETURNED",
+      "CONVERTED"
+    ],
+    "leg_type": [
+      "AUTH_HOLD",
+      "SCHEME_SETTLEMENT",
+      "FUNDING",
+      "ENTITY_TRANSFER",
+      "FX_CONVERSION"
+    ],
+    "fee_type": [
+      "INTERCHANGE",
+      "SCHEME_FEE",
+      "PROCESSING_FEE",
+      "FX_MARKUP",
+      "TRANSFER_FEE",
+      "ACQUIRER_FEE",
+      "CHARGEBACK_FEE",
+      "PENALTY",
+      "INCENTIVE",
+      "WAIVER"
+    ],
+    "party_type": [
+      "SCHEME",
+      "CKO_ENTITY",
+      "CLIENT_ENTITY"
+    ],
+    "fee_status": [
+      "PREDICTED",
+      "ACTUAL"
+    ],
+    "leg_status": [
+      "PREDICTED",
+      "ACTUAL"
+    ],
+    "block_status": [
+      "NOT_LIVE",
+      "LIVE",
+      "DEAD"
+    ],
+    "fee_amount_type": [
+      "FIXED",
+      "VARIABLE"
+    ],
+    "client_settlement_type": [
+      "Gross",
+      "Net"
+    ]
+  }
+}

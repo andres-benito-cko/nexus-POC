@@ -140,3 +140,10 @@ restart-ui:
 	  --profile $(AWS_PROFILE) \
 	  --document-name AWS-StartNonInteractiveCommand \
 	  --parameters '{"command":["sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull && systemctl restart nexus-ui"]}'
+
+# --- AI Generator ---
+sync-domain:
+	./scripts/sync-domain.sh
+
+build-generator: sync-domain
+	cd ai-generator && ./gradlew build -x test

@@ -1,0 +1,102 @@
+{
+  "nexus_id": "act_cap_001",
+  "parent_nexus_id": "pay_001",
+  "action_id": "act_cap_001",
+  "action_root_id": "pay_001",
+  "status": "NOT_LIVE",
+  "entity": {
+    "id": "cli_acme_corp"
+  },
+  "cko_entity_id": "CKO_UK_LTD",
+  "processed_at": "2026-03-20T14:30:00Z",
+  "transactions": [
+    {
+      "transaction_id": "act_cap_001_1",
+      "product_type": "ACQUIRING",
+      "transaction_type": "CAPTURE",
+      "transaction_status": "CAPTURED",
+      "transaction_amount": 100.0,
+      "transaction_currency": "EUR",
+      "transaction_date": "2026-03-20",
+      "metadata": {
+        "scheme_code": "VISA",
+        "payment_method": "card",
+        "acquirer_name": "CKO_UK_LTD",
+        "acquirer_country": "GB",
+        "source_event_type": "payment_captured",
+        "client_settlement_type": "Net"
+      },
+      "legs": [
+        {
+          "leg_id": "act_cap_001_1_L1",
+          "leg_type": "SCHEME_SETTLEMENT",
+          "leg_amount": 100.0,
+          "leg_currency": "EUR",
+          "leg_status": "PREDICTED",
+          "value_date": "2026-03-21",
+          "from_party": {
+            "party_type": "SCHEME",
+            "party_id": "VISA"
+          },
+          "to_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_UK_LTD",
+            "currency_account_id": "ca_cko_uk_eur_001"
+          },
+          "fees": [
+            {
+              "fee_id": "act_cap_001_1_L1_F1",
+              "fee_type": "INTERCHANGE",
+              "fee_amount": 0.5,
+              "fee_currency": "EUR",
+              "fee_status": "PREDICTED"
+            },
+            {
+              "fee_id": "act_cap_001_1_L1_F2",
+              "fee_type": "SCHEME_FEE",
+              "fee_amount": 0.1,
+              "fee_currency": "EUR",
+              "fee_status": "PREDICTED"
+            }
+          ]
+        },
+        {
+          "leg_id": "act_cap_001_1_L2",
+          "leg_type": "FUNDING",
+          "leg_amount": 100.0,
+          "leg_currency": "EUR",
+          "leg_status": "PREDICTED",
+          "value_date": "2026-03-22",
+          "from_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_UK_LTD",
+            "currency_account_id": "ca_cko_uk_eur_001"
+          },
+          "to_party": {
+            "party_type": "CLIENT_ENTITY",
+            "party_id": "cli_acme_corp",
+            "currency_account_id": "ca_acme_eur_001"
+          },
+          "reserve_amount": 2.0,
+          "reserve_currency": "EUR",
+          "fees": [
+            {
+              "fee_id": "act_cap_001_1_L2_F1",
+              "fee_type": "PROCESSING_FEE",
+              "fee_amount": 0.2,
+              "fee_currency": "EUR",
+              "fee_status": "PREDICTED"
+            },
+            {
+              "fee_id": "act_cap_001_1_L2_F2",
+              "fee_type": "ACQUIRER_FEE",
+              "fee_amount": 0.1,
+              "fee_currency": "EUR",
+              "fee_status": "PREDICTED"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

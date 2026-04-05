@@ -1,0 +1,150 @@
+{
+  "nexus_id": "act_cap_012",
+  "parent_nexus_id": "pay_012",
+  "action_id": "act_cap_012",
+  "action_root_id": "pay_012",
+  "status": "NOT_LIVE",
+  "entity": {
+    "id": "cli_global_corp"
+  },
+  "cko_entity_id": "CKO_UK_LTD",
+  "processed_at": "2026-03-19T09:00:00Z",
+  "transactions": [
+    {
+      "transaction_id": "act_cap_012_1",
+      "product_type": "ACQUIRING",
+      "transaction_type": "CAPTURE",
+      "transaction_status": "CAPTURED",
+      "transaction_amount": 100.00,
+      "transaction_currency": "EUR",
+      "transaction_date": "2026-03-19",
+      "metadata": {
+        "scheme_code": "VISA",
+        "payment_method": "card",
+        "acquirer_name": "CKO_FR_SAS",
+        "acquirer_country": "FR",
+        "source_event_type": "payment_captured",
+        "client_settlement_type": "IC++"
+      },
+      "legs": [
+        {
+          "leg_id": "act_cap_012_1_L1",
+          "leg_type": "SCHEME_SETTLEMENT",
+          "leg_amount": 100.00,
+          "leg_currency": "EUR",
+          "leg_status": "PREDICTED",
+          "value_date": "2026-03-20",
+          "from_party": {
+            "party_type": "SCHEME",
+            "party_id": "VISA"
+          },
+          "to_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_FR_SAS",
+            "currency_account_id": "ca_cko_fr_eur_001"
+          },
+          "fees": [
+            {
+              "fee_id": "act_cap_012_1_L1_F1",
+              "fee_type": "INTERCHANGE",
+              "fee_amount": 0.60,
+              "fee_currency": "EUR",
+              "fee_status": "PREDICTED",
+              "passthrough": true
+            },
+            {
+              "fee_id": "act_cap_012_1_L1_F2",
+              "fee_type": "SCHEME_FEE",
+              "fee_amount": 0.12,
+              "fee_currency": "EUR",
+              "fee_status": "PREDICTED",
+              "passthrough": true
+            }
+          ]
+        },
+        {
+          "leg_id": "act_cap_012_1_L2",
+          "leg_type": "FUNDING",
+          "leg_amount": 100.00,
+          "leg_currency": "EUR",
+          "leg_status": "PREDICTED",
+          "value_date": "2026-03-21",
+          "from_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_UK_LTD",
+            "currency_account_id": "ca_cko_uk_eur_001"
+          },
+          "to_party": {
+            "party_type": "CLIENT_ENTITY",
+            "party_id": "cli_global_corp",
+            "currency_account_id": "ca_global_eur_001"
+          },
+          "fees": [
+            {
+              "fee_id": "act_cap_012_1_L1_F1",
+              "fee_type": "INTERCHANGE",
+              "fee_amount": 0.60,
+              "fee_currency": "EUR",
+              "fee_status": "PREDICTED",
+              "passthrough": true
+            },
+            {
+              "fee_id": "act_cap_012_1_L1_F2",
+              "fee_type": "SCHEME_FEE",
+              "fee_amount": 0.12,
+              "fee_currency": "EUR",
+              "fee_status": "PREDICTED",
+              "passthrough": true
+            },
+            {
+              "fee_id": "act_cap_012_1_L2_F1",
+              "fee_type": "PROCESSING_FEE",
+              "fee_amount": 0.25,
+              "fee_currency": "EUR",
+              "fee_status": "PREDICTED"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "transaction_id": "act_cap_012_2",
+      "product_type": "TRANSFER",
+      "transaction_type": "DEBIT",
+      "transaction_status": "SETTLED",
+      "transaction_amount": 99.28,
+      "transaction_currency": "EUR",
+      "transaction_date": "2026-03-19",
+      "metadata": {},
+      "legs": [
+        {
+          "leg_id": "act_cap_012_2_L1",
+          "leg_type": "ENTITY_TRANSFER",
+          "leg_amount": 99.28,
+          "leg_currency": "EUR",
+          "leg_status": "ACTUAL",
+          "value_date": "2026-03-19",
+          "from_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_FR_SAS",
+            "currency_account_id": "ca_cko_fr_eur_001"
+          },
+          "to_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_UK_LTD",
+            "currency_account_id": "ca_cko_uk_eur_001"
+          },
+          "fees": [
+            {
+              "fee_id": "act_cap_012_2_L1_F1",
+              "fee_type": "TRANSFER_FEE",
+              "fee_amount": 0.05,
+              "fee_currency": "EUR",
+              "fee_status": "ACTUAL"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

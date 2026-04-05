@@ -1,0 +1,45 @@
+{
+  "nexus_id": "act_top_001",
+  "parent_nexus_id": "pay_top_001",
+  "action_id": "act_top_001",
+  "action_root_id": "pay_top_001",
+  "status": "LIVE",
+  "entity": {
+    "id": "cli_acme_corp"
+  },
+  "cko_entity_id": "CKO_UK_LTD",
+  "processed_at": "2026-03-20T09:30:00Z",
+  "transactions": [
+    {
+      "transaction_id": "act_top_001_1",
+      "product_type": "TOPUP",
+      "transaction_type": "CREDIT",
+      "transaction_status": "SETTLED",
+      "transaction_amount": 1000.0,
+      "transaction_currency": "EUR",
+      "transaction_date": "2026-03-20",
+      "metadata": {},
+      "legs": [
+        {
+          "leg_id": "act_top_001_1_L1",
+          "leg_type": "FUNDING",
+          "leg_amount": 1000.0,
+          "leg_currency": "EUR",
+          "leg_status": "ACTUAL",
+          "value_date": "2026-03-22",
+          "from_party": {
+            "party_type": "CLIENT_ENTITY",
+            "party_id": "cli_acme_corp",
+            "currency_account_id": "ca_acme_eur_001"
+          },
+          "to_party": {
+            "party_type": "CKO_ENTITY",
+            "party_id": "CKO_UK_LTD",
+            "currency_account_id": "ca_cko_uk_eur_001"
+          },
+          "fees": []
+        }
+      ]
+    }
+  ]
+}
