@@ -25,7 +25,7 @@ const NAV_SECTIONS = [
     items: [
       { to: '/rules-engine/accounts', label: 'Accounts' },
       { to: '/rules-engine/rules', label: 'Rules' },
-      { to: '/rules-engine/errors', label: 'Errors' },
+      { to: '/rules-engine/blotter', label: 'Blotter' },
     ],
   },
 ] as const

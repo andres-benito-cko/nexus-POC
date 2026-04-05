@@ -7,7 +7,7 @@ import TestBench from './pages/TestBench'
 import LiveScreen from './pages/LiveScreen'
 import Rules from './pages/Rules'
 import ChartOfAccounts from './pages/ChartOfAccounts'
-import PostingErrors from './pages/PostingErrors'
+import Blotter from './pages/Blotter'
 import SchemaExplorer from './pages/learn/SchemaExplorer'
 import ExamplesPage from './pages/learn/ExamplesPage'
 import LEvsNexus from './pages/learn/LEvsNexus'
@@ -36,7 +36,8 @@ function App() {
         <Route path="/rules-engine" element={<Navigate to="/rules-engine/accounts" replace />} />
         <Route path="/rules-engine/accounts" element={<ChartOfAccounts />} />
         <Route path="/rules-engine/rules" element={<Rules />} />
-        <Route path="/rules-engine/errors" element={<PostingErrors />} />
+        <Route path="/rules-engine/blotter" element={<Blotter />} />
+        <Route path="/rules-engine/errors" element={<Navigate to="/rules-engine/blotter?tab=errors" replace />} />
       </Route>
     </Routes>
   )

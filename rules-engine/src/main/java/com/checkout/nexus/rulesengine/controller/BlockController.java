@@ -3,6 +3,7 @@ package com.checkout.nexus.rulesengine.controller;
 import com.checkout.nexus.rulesengine.model.entity.LedgerEntry;
 import com.checkout.nexus.rulesengine.model.entity.NexusBlockRecord;
 import com.checkout.nexus.rulesengine.repository.LedgerEntryRepository;
+import com.checkout.nexus.rulesengine.repository.LeEventRepository;
 import com.checkout.nexus.rulesengine.repository.NexusBlockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +20,7 @@ public class BlockController {
 
     private final NexusBlockRepository nexusBlockRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
+    private final LeEventRepository leEventRepository;
 
     @GetMapping
     public List<NexusBlockRecord> listTransactions(@RequestParam(defaultValue = "20") int limit) {
@@ -42,6 +44,16 @@ public class BlockController {
                     "ledgerEntries", entries
                 ));
             })
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/source")
+    public ResponseEntity<String> getTransactionSource(@PathVariable String id) {
+        return nexusBlockRepository.findById(id)
+            .flatMap(block -> leEventRepository.findById(block.getActionId()))
+            .map(le -> ResponseEntity.ok()
+                .header("Content-Type", "application/json")
+                .body(le.getRawJson()))
             .orElse(ResponseEntity.notFound().build());
     }
 }

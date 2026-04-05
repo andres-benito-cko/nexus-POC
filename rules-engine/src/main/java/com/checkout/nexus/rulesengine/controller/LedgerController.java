@@ -22,7 +22,7 @@ public class LedgerController {
     @GetMapping("/entries")
     public List<LedgerEntry> getEntries(
             @RequestParam(required = false) String nexusId,
-            @RequestParam(defaultValue = "50") int limit) {
+            @RequestParam(defaultValue = "500") int limit) {
         if (nexusId != null && !nexusId.isEmpty()) {
             return ledgerEntryRepository.findByNexusId(nexusId);
         }
@@ -43,7 +43,7 @@ public class LedgerController {
     public List<PostingError> getErrors(
             @RequestParam(required = false) String nexusId,
             @RequestParam(required = false) String transactionId,
-            @RequestParam(defaultValue = "50") int limit) {
+            @RequestParam(defaultValue = "500") int limit) {
         if (nexusId != null && !nexusId.isEmpty()) {
             return postingErrorRepository.findByNexusId(nexusId);
         }

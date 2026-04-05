@@ -73,6 +73,11 @@ public class EventStreamService extends TextWebSocketHandler {
         broadcast("NEXUS_BLOCK", payload);
     }
 
+    @KafkaListener(topics = "nexus.ledger.entries", groupId = "nexus-api-live")
+    public void onLedgerEntry(String payload) {
+        broadcast("LEDGER_ENTRY", payload);
+    }
+
     // ------------------------------------------------------------------ Public API
 
     public void broadcast(String type, String payloadJson) {

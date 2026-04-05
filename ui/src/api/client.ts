@@ -258,3 +258,58 @@ export function getPostingErrors(params?: { nexusId?: string; transactionId?: st
   if (params?.transactionId) query.set('transactionId', params.transactionId)
   return fetchRulesEngine(`/ledger/errors?${query}`)
 }
+
+// --- Ledger Entry types and API ---
+
+export interface LedgerEntry {
+  id: string
+  ruleId: string | null
+  ruleName: string | null
+  nexusId: string
+  transactionId: string
+  legId: string | null
+  account: string
+  side: 'DEBIT' | 'CREDIT'
+  amount: number
+  currency: string
+  productType: string | null
+  transactionType: string | null
+  transactionStatus: string | null
+  createdAt: string
+}
+
+export function getLedgerEntries(params?: { nexusId?: string; limit?: number }): Promise<LedgerEntry[]> {
+  const query = new URLSearchParams()
+  if (params?.nexusId) query.set('nexusId', params.nexusId)
+  if (params?.limit) query.set('limit', String(params.limit))
+  return fetchRulesEngine(`/ledger/entries?${query}`)
+}
+
+// --- Block detail API ---
+
+export interface NexusBlockRecord {
+  nexusId: string
+  actionId: string
+  actionRootId: string | null
+  status: string
+  entityId: string | null
+  ckoEntityId: string | null
+  productType: string | null
+  transactionType: string | null
+  transactionStatus: string | null
+  transactionAmount: number | null
+  transactionCurrency: string | null
+  rawJson: string
+  receivedAt: string
+  updatedAt: string
+}
+
+export function getBlock(nexusId: string): Promise<NexusBlockRecord> {
+  return fetchRulesEngine(`/blocks/${nexusId}`)
+}
+
+export async function getBlockSource(nexusId: string): Promise<string> {
+  const res = await fetch(`${RULES_ENGINE_API}/blocks/${nexusId}/source`)
+  if (!res.ok) throw new Error(`Rules Engine ${res.status}: ${res.statusText}`)
+  return res.text()
+}
