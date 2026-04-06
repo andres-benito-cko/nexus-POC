@@ -79,6 +79,12 @@ export class NexusPocStack extends cdk.Stack {
     );
     githubToken.grantRead(role);
 
+    // Bedrock — ai-generator service calls Claude via the Converse API
+    role.addToPolicy(new iam.PolicyStatement({
+      actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
+      resources: ['arn:aws:bedrock:eu-west-1::foundation-model/anthropic.*'],
+    }));
+
     // ---------------------------------------------------------------------------
     // LaunchTemplate — IMDSv2 required.
     // SCP p-n94gdmkj (qa-Restrictions) denies RunInstances when
@@ -225,10 +231,15 @@ services:
     restart: unless-stopped
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: "${INFRA_IP}:9092"
+  ai-generator:
+    restart: unless-stopped
+    environment:
+      NEXUS_TRANSFORMER_URL: "http://nexus-transformer:8082"
+      AWS_REGION: "${this.region}"
 `),
       'cd /home/ec2-user/nexus-POC',
       waitForPort(INFRA_IP, 9092),
-      'sudo -u ec2-user docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build -d --no-deps nexus-api nexus-transformer',
+      'sudo -u ec2-user docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build -d --no-deps nexus-api nexus-transformer ai-generator',
     );
 
     const apiInstance = new ec2.Instance(this, 'ApiInstance', {
@@ -280,6 +291,7 @@ After=network.target
 Type=simple
 User=ec2-user
 Environment="VITE_BACKEND_URL=http://${API_IP}:8083"
+Environment="VITE_GENERATOR_URL=http://${API_IP}:8084"
 Environment="VITE_SIMULATOR_URL=http://${WORKERS_IP}:8081"
 Environment="VITE_RULES_ENGINE_URL=http://${WORKERS_IP}:8080"
 ExecStart=/usr/bin/node /home/ec2-user/nexus-POC/ui/server.cjs

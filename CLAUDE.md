@@ -14,6 +14,8 @@ LE Simulator → [Kafka] → Nexus Transformer → [Kafka] → Rules Engine → 
      |                    nexus-api (BFF)                      |
      |                         ↑                              |
      +————————————— UI (React) ————————————————————————————————+
+                                |
+                          ai-generator ←→ Amazon Bedrock (Claude)
 ```
 
 **Data pipeline:**
@@ -21,7 +23,8 @@ LE Simulator → [Kafka] → Nexus Transformer → [Kafka] → Rules Engine → 
 2. **Nexus Transformer** (port 8082) — Consumes LE events, applies configurable engine (YAML + SpEL + named resolvers), produces validated Nexus transactions
 3. **Rules Engine** (port 8080) — Consumes Nexus events, evaluates rules, produces double-entry ledger postings
 4. **Nexus API** (port 8083) — BFF for the UI: engine config CRUD, test bench, DLQ, WebSocket aggregation
-5. **UI** (Vite dev on port 5173) — React frontend: dashboard, config editor, test bench, live stream, DLQ viewer
+5. **AI Generator** (port 8084) — Accepts natural language prompts, produces valid LE transactions via Claude on Bedrock with agentic self-correction
+6. **UI** (Vite dev on port 5173) — React frontend: dashboard, config editor, test bench (with AI generation), live stream, DLQ viewer
 
 **Infrastructure:** Kafka (Confluent 7.5), PostgreSQL 15, Zookeeper — all via Docker Compose.
 
@@ -29,7 +32,7 @@ LE Simulator → [Kafka] → Nexus Transformer → [Kafka] → Rules Engine → 
 
 ```bash
 # Build all Java services
-for svc in le-simulator nexus-transformer nexus-api rules-engine; do
+for svc in le-simulator nexus-transformer nexus-api rules-engine ai-generator; do
   (cd $svc && ./gradlew build -x test)
 done
 
@@ -55,6 +58,7 @@ cd ui && npm install && npm run dev
 ├── nexus-transformer/     ← Spring Boot — LE→Nexus transformation engine
 ├── nexus-api/             ← Spring Boot — BFF for UI
 ├── rules-engine/          ← Spring Boot — Rule evaluation + ledger
+├── ai-generator/          ← Spring Boot — AI-powered LE transaction generator (Bedrock)
 └── ui/                    ← React + Vite + TypeScript frontend
 ```
 

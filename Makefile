@@ -123,7 +123,7 @@ redeploy-api:
 	  --region $(AWS_REGION) \
 	  --profile $(AWS_PROFILE) \
 	  --document-name AWS-StartNonInteractiveCommand \
-	  --parameters '{"command":["sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull && sudo -u ec2-user docker-compose -f /home/ec2-user/nexus-POC/docker-compose.yml -f /home/ec2-user/nexus-POC/docker-compose.override.yml --project-directory /home/ec2-user/nexus-POC up --build -d --no-deps nexus-api nexus-transformer"]}'
+	  --parameters '{"command":["sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull && sudo -u ec2-user docker-compose -f /home/ec2-user/nexus-POC/docker-compose.yml -f /home/ec2-user/nexus-POC/docker-compose.override.yml --project-directory /home/ec2-user/nexus-POC up --build -d --no-deps nexus-api nexus-transformer ai-generator"]}'
 
 redeploy-workers:
 	aws ssm start-session \

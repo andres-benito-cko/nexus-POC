@@ -9,7 +9,7 @@ Three EC2 `t3.medium` instances in a private subnet (`subnet-0076d4d589390d99d`,
 | Instance | Fixed IP | Services |
 |---|---|---|
 | InfraInstance | `10.144.177.10` | zookeeper, kafka, postgres |
-| ApiInstance | `10.144.177.20` | nexus-api (8083), nexus-transformer (8082) |
+| ApiInstance | `10.144.177.20` | nexus-api (8083), nexus-transformer (8082), ai-generator (8084) |
 | WorkersInstance | `10.144.177.30` | le-simulator (8081), rules-engine (8080), UI (5173) |
 
 Container orchestration: docker-compose v1 (installed via pip in a venv at `/opt/dc-venv`).
@@ -88,7 +88,7 @@ Policy `p-n94gdmkj` (`qa-Restrictions`) in `cko-core-platform/multi-account-org-
 Requires Docker running locally. Uses the `gradle:8.7-jdk17` image — no local JDK needed.
 ```bash
 cd Projects/nexus-POC
-for svc in le-simulator nexus-transformer nexus-api rules-engine; do
+for svc in le-simulator nexus-transformer nexus-api rules-engine ai-generator; do
   docker run --rm \
     -v "$(pwd)/$svc:/app" \
     -w /app \
@@ -98,7 +98,8 @@ done
 git add -f le-simulator/build/libs/le-simulator-0.0.1-SNAPSHOT.jar \
            nexus-transformer/build/libs/nexus-transformer-0.0.1-SNAPSHOT.jar \
            nexus-api/build/libs/nexus-api-0.0.1-SNAPSHOT.jar \
-           rules-engine/build/libs/rules-engine-0.0.1-SNAPSHOT.jar
+           rules-engine/build/libs/rules-engine-0.0.1-SNAPSHOT.jar \
+           ai-generator/build/libs/ai-generator-0.0.1-SNAPSHOT.jar
 ```
 
 ### Step 2 — Pre-build UI (if UI changed)
@@ -127,7 +128,7 @@ The Makefile extracts `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SES
 
 The stack takes ~3 minutes. Each instance bootstraps in parallel:
 - **Infra**: installs Docker, clones repo, pulls bitnami/zookeeper + bitnami/kafka + postgres from ECR Public, starts containers with `restart: unless-stopped`.
-- **API**: same setup, waits for `kafka:9092` to be reachable, starts nexus-api + nexus-transformer with `restart: unless-stopped`.
+- **API**: same setup, waits for `kafka:9092` to be reachable, starts nexus-api + nexus-transformer + ai-generator with `restart: unless-stopped`. The ai-generator uses the EC2 instance role for Bedrock access (no explicit AWS credentials needed).
 - **Workers**: same setup, waits for `kafka:9092`, starts le-simulator + rules-engine with `restart: unless-stopped`, then installs and starts `nexus-ui.service` (systemd) to serve the pre-built UI.
 
 Monitor progress via SSM (separate terminal windows):
@@ -145,7 +146,7 @@ make logs-workers  # tail /var/log/nexus-poc-workers.log
 ```bash
 # 1. Rebuild JARs locally (Step 1 above)
 # 2. git add -f + commit + push
-make redeploy-api      # git pull + rebuild nexus-api + nexus-transformer
+make redeploy-api      # git pull + rebuild nexus-api + nexus-transformer + ai-generator
 make redeploy-workers  # git pull + rebuild le-simulator + rules-engine
 ```
 
@@ -244,6 +245,7 @@ All images pulled from `public.ecr.aws` (Docker Hub is blocked):
 | nexus-transformer | built from `public.ecr.aws/docker/library/eclipse-temurin:17-jre` |
 | rules-engine | built from `public.ecr.aws/docker/library/eclipse-temurin:17-jre` |
 | le-simulator | built from `public.ecr.aws/docker/library/eclipse-temurin:17-jre` |
+| ai-generator | built from `public.ecr.aws/docker/library/eclipse-temurin:17-jre` |
 
 ## Known Issues and Fixes
 
