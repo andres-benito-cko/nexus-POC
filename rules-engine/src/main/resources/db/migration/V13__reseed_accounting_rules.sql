@@ -17,6 +17,9 @@
 -- Rule naming convention: "{TxnType} {Description} (S{stage})"
 -- where stage corresponds to the paper's lifecycle stages.
 
+-- Clear dependent tables before replacing rules (FK: ledger_entries.rule_id → rules.id)
+DELETE FROM posting_errors;
+DELETE FROM ledger_entries;
 DELETE FROM rules;
 
 INSERT INTO rules (name, description, product_type, transaction_type, transaction_status, leg_type, leg_status, firing_context, fee_type, passthrough, debit_account, credit_account, amount_source) VALUES
