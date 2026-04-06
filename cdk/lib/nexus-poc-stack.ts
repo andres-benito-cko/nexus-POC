@@ -95,7 +95,7 @@ export class NexusPocStack extends cdk.Stack {
       launchTemplateData: {
         metadataOptions: {
           httpTokens: 'required',
-          httpPutResponseHopLimit: 2, // 2 hops: host → Docker container needs extra hop for IMDS
+          httpPutResponseHopLimit: 1,
           httpEndpoint: 'enabled',
         },
       },
@@ -231,15 +231,14 @@ services:
     restart: unless-stopped
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: "${INFRA_IP}:9092"
-  ai-generator:
-    restart: unless-stopped
-    environment:
-      NEXUS_TRANSFORMER_URL: "http://nexus-transformer:8082"
-      AWS_REGION: "${this.region}"
 `),
       'cd /home/ec2-user/nexus-POC',
       waitForPort(INFRA_IP, 9092),
-      'sudo -u ec2-user docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build -d --no-deps nexus-api nexus-transformer ai-generator',
+      'sudo -u ec2-user docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build -d --no-deps nexus-api nexus-transformer',
+      // ai-generator needs --network host for IMDS credential access (Bedrock)
+      // Cannot use docker-compose because compose v1 rejects network_mode: host with port_bindings
+      'sudo -u ec2-user docker build -t nexus-poc_ai-generator ./ai-generator',
+      `sudo -u ec2-user docker run -d --name ai-generator --network host --restart unless-stopped -e NEXUS_TRANSFORMER_URL=http://localhost:8082 -e AWS_REGION=${this.region} -e SERVER_PORT=8084 nexus-poc_ai-generator`,
     );
 
     const apiInstance = new ec2.Instance(this, 'ApiInstance', {

@@ -73,18 +73,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: nexus
       SERVER_PORT: 8080
 
-  ai-generator:
-    build: ./ai-generator
-    depends_on: [nexus-transformer]
-    restart: on-failure
-    ports: ["8084:8084"]
-    environment:
-      NEXUS_TRANSFORMER_URL: http://nexus-transformer:8082
-      AWS_REGION: ${AWS_REGION:-eu-west-1}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
-      SERVER_PORT: 8084
+  # ai-generator is NOT in docker-compose because it needs --network host
+  # for IMDS credential access on EC2. Run it separately:
+  #   docker build -t nexus-poc_ai-generator ./ai-generator
+  #   docker run -d --name ai-generator --network host --restart unless-stopped \
+  #     -e NEXUS_TRANSFORMER_URL=http://localhost:8082 \
+  #     -e AWS_REGION=eu-west-1 -e SERVER_PORT=8084 nexus-poc_ai-generator
+  # For local dev with explicit credentials, use docker-compose.local.yml override.
 
 volumes:
   postgres_data:

@@ -128,7 +128,7 @@ The Makefile extracts `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SES
 
 The stack takes ~3 minutes. Each instance bootstraps in parallel:
 - **Infra**: installs Docker, clones repo, pulls bitnami/zookeeper + bitnami/kafka + postgres from ECR Public, starts containers with `restart: unless-stopped`.
-- **API**: same setup, waits for `kafka:9092` to be reachable, starts nexus-api + nexus-transformer + ai-generator with `restart: unless-stopped`. The ai-generator uses the EC2 instance role for Bedrock access (no explicit AWS credentials needed).
+- **API**: same setup, waits for `kafka:9092` to be reachable, starts nexus-api + nexus-transformer via docker-compose with `restart: unless-stopped`, then builds and runs ai-generator via `docker run --network host` (host networking required for IMDS credential access to Bedrock — compose v1 can't combine `network_mode: host` with port bindings).
 - **Workers**: same setup, waits for `kafka:9092`, starts le-simulator + rules-engine with `restart: unless-stopped`, then installs and starts `nexus-ui.service` (systemd) to serve the pre-built UI.
 
 Monitor progress via SSM (separate terminal windows):

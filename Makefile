@@ -123,7 +123,7 @@ redeploy-api:
 	  --region $(AWS_REGION) \
 	  --profile $(AWS_PROFILE) \
 	  --document-name AWS-StartNonInteractiveCommand \
-	  --parameters '{"command":["sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull && sudo -u ec2-user docker-compose -f /home/ec2-user/nexus-POC/docker-compose.yml -f /home/ec2-user/nexus-POC/docker-compose.override.yml --project-directory /home/ec2-user/nexus-POC up --build -d --no-deps nexus-api nexus-transformer ai-generator"]}'
+	  --parameters '{"command":["sudo -u ec2-user git -C /home/ec2-user/nexus-POC pull && sudo -u ec2-user docker-compose -f /home/ec2-user/nexus-POC/docker-compose.yml -f /home/ec2-user/nexus-POC/docker-compose.override.yml --project-directory /home/ec2-user/nexus-POC up --build -d --no-deps nexus-api nexus-transformer && cd /home/ec2-user/nexus-POC && sudo -u ec2-user docker build -t nexus-poc_ai-generator ./ai-generator && docker rm -f ai-generator 2>/dev/null; sudo -u ec2-user docker run -d --name ai-generator --network host --restart unless-stopped -e NEXUS_TRANSFORMER_URL=http://localhost:8082 -e AWS_REGION=eu-west-1 -e SERVER_PORT=8084 nexus-poc_ai-generator"]}'
 
 redeploy-workers:
 	aws ssm start-session \
