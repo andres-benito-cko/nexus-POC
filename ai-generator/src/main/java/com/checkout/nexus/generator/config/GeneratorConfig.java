@@ -16,7 +16,7 @@ public class GeneratorConfig {
     @Data
     public static class Bedrock {
         private String region = "eu-west-1";
-        private String modelId = "eu.anthropic.claude-sonnet-4-20250514-v1:0";
+        private String modelId = "anthropic.claude-sonnet-4-20250514-v1:0";
     }
 
     @Data

@@ -82,11 +82,31 @@ public class BedrockClient {
     }
 
     private software.amazon.awssdk.core.document.Document toDocument(JsonNode jsonNode) {
-        try {
-            String json = mapper.writeValueAsString(jsonNode);
-            return software.amazon.awssdk.core.document.Document.fromString(json);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to convert tool schema to Document", e);
+        if (jsonNode == null || jsonNode.isNull()) {
+            return software.amazon.awssdk.core.document.Document.fromNull();
         }
+        if (jsonNode.isTextual()) {
+            return software.amazon.awssdk.core.document.Document.fromString(jsonNode.asText());
+        }
+        if (jsonNode.isNumber()) {
+            return software.amazon.awssdk.core.document.Document.fromNumber(jsonNode.numberValue().toString());
+        }
+        if (jsonNode.isBoolean()) {
+            return software.amazon.awssdk.core.document.Document.fromBoolean(jsonNode.asBoolean());
+        }
+        if (jsonNode.isArray()) {
+            java.util.List<software.amazon.awssdk.core.document.Document> items = new java.util.ArrayList<>();
+            for (JsonNode item : jsonNode) {
+                items.add(toDocument(item));
+            }
+            return software.amazon.awssdk.core.document.Document.fromList(items);
+        }
+        if (jsonNode.isObject()) {
+            java.util.Map<String, software.amazon.awssdk.core.document.Document> map = new java.util.LinkedHashMap<>();
+            jsonNode.fields().forEachRemaining(entry ->
+                    map.put(entry.getKey(), toDocument(entry.getValue())));
+            return software.amazon.awssdk.core.document.Document.fromMap(map);
+        }
+        return software.amazon.awssdk.core.document.Document.fromNull();
     }
 }

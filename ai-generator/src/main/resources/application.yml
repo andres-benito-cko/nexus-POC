@@ -4,7 +4,7 @@ server:
 generator:
   bedrock:
     region: ${AWS_REGION:eu-west-1}
-    model-id: ${BEDROCK_MODEL_ID:eu.anthropic.claude-sonnet-4-20250514-v1:0}
+    model-id: ${BEDROCK_MODEL_ID:anthropic.claude-sonnet-4-20250514-v1:0}
   transformer:
     url: ${NEXUS_TRANSFORMER_URL:http://localhost:8082}
   agent:
