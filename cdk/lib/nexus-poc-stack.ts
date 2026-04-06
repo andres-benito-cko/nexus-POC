@@ -281,6 +281,7 @@ Type=simple
 User=ec2-user
 Environment="VITE_BACKEND_URL=http://${API_IP}:8083"
 Environment="VITE_SIMULATOR_URL=http://${WORKERS_IP}:8081"
+Environment="VITE_RULES_ENGINE_URL=http://${WORKERS_IP}:8080"
 ExecStart=/usr/bin/node /home/ec2-user/nexus-POC/ui/server.cjs
 Restart=always
 RestartSec=5

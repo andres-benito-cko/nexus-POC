@@ -17,6 +17,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/rules-api': {
+        target: process.env.VITE_RULES_ENGINE_URL || 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/rules-api/, ''),
+      },
       '/ws': {
         target: process.env.VITE_WS_URL || 'ws://localhost:8083',
         changeOrigin: true,

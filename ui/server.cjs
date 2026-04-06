@@ -4,6 +4,7 @@
  *
  * - Serves static files from ./dist/ with SPA fallback to index.html
  * - Proxies /api/* → VITE_BACKEND_URL  (strips /api prefix)
+ * - Proxies /rules-api/* → VITE_RULES_ENGINE_URL (strips /rules-api prefix)
  * - Proxies /simulate/* → VITE_SIMULATOR_URL
  * - Proxies /ws WebSocket upgrades → VITE_BACKEND_URL
  *
@@ -21,11 +22,13 @@ const url  = require('url');
 
 const DIST          = path.join(__dirname, 'dist');
 const PORT          = parseInt(process.env.PORT || '5173', 10);
-const BACKEND_URL   = process.env.VITE_BACKEND_URL   || 'http://localhost:8083';
-const SIMULATOR_URL = process.env.VITE_SIMULATOR_URL || 'http://localhost:8081';
+const BACKEND_URL      = process.env.VITE_BACKEND_URL      || 'http://localhost:8083';
+const SIMULATOR_URL    = process.env.VITE_SIMULATOR_URL    || 'http://localhost:8081';
+const RULES_ENGINE_URL = process.env.VITE_RULES_ENGINE_URL || 'http://localhost:8080';
 
-const backend   = new url.URL(BACKEND_URL);
-const simulator = new url.URL(SIMULATOR_URL);
+const backend      = new url.URL(BACKEND_URL);
+const simulator    = new url.URL(SIMULATOR_URL);
+const rulesEngine  = new url.URL(RULES_ENGINE_URL);
 
 const MIME = {
   '.html':  'text/html; charset=utf-8',
@@ -59,6 +62,9 @@ function proxyHttp(req, res, target, rewrite) {
 }
 
 const server = http.createServer((req, res) => {
+  if (req.url.startsWith('/rules-api')) {
+    return proxyHttp(req, res, rulesEngine, /^\/rules-api/);
+  }
   if (req.url.startsWith('/api')) {
     return proxyHttp(req, res, backend, /^\/api/);
   }
@@ -104,5 +110,6 @@ server.on('upgrade', (req, socket, head) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Nexus UI running on http://0.0.0.0:${PORT}`);
   console.log(`  API  proxy → ${BACKEND_URL}`);
+  console.log(`  Rules proxy → ${RULES_ENGINE_URL}`);
   console.log(`  Sim  proxy → ${SIMULATOR_URL}`);
 });

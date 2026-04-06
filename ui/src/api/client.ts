@@ -160,9 +160,9 @@ export function stopSimulator(): Promise<void> {
   return fetchSimulator('/simulate/stop', { method: 'POST' })
 }
 
-// --- Rules Engine direct API (port 8080) ---
+// --- Rules Engine API (proxied via /rules-api) ---
 
-const RULES_ENGINE_API = 'http://localhost:8080'
+const RULES_ENGINE_API = '/rules-api'
 
 async function fetchRulesEngine<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${RULES_ENGINE_API}${path}`, {
@@ -309,7 +309,7 @@ export function getBlock(nexusId: string): Promise<NexusBlockRecord> {
 }
 
 export async function getBlockSource(nexusId: string): Promise<string> {
-  const res = await fetch(`${RULES_ENGINE_API}/blocks/${nexusId}/source`)
+  const res = await fetch(`/rules-api/blocks/${nexusId}/source`)
   if (!res.ok) throw new Error(`Rules Engine ${res.status}: ${res.statusText}`)
   return res.text()
 }
