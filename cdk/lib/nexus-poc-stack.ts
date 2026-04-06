@@ -95,7 +95,7 @@ export class NexusPocStack extends cdk.Stack {
       launchTemplateData: {
         metadataOptions: {
           httpTokens: 'required',
-          httpPutResponseHopLimit: 1,
+          httpPutResponseHopLimit: 2, // 2 hops: host → Docker container needs extra hop for IMDS
           httpEndpoint: 'enabled',
         },
       },
